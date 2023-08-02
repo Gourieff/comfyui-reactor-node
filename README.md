@@ -26,16 +26,17 @@ Users of this software are expected to use this software responsibly while abidi
 2. Open Console or Terminal and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
 3. Go to the SD WebUI root folder, open Console or Terminal and run (Windows users)`.\venv\Scripts\activate` or (Linux/MacOS)`venv/bin/activate`
 4. `python -m pip install -U pip`
-5. `python extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node\install.py`
-6. Please, wait until the installation process will be finished
-7. Run SD WebUI and check console for the message that ReActor Node is running:
+5. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
+6. `python install.py`
+7. Please, wait until the installation process will be finished
+8. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
 
-8. Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
+9. Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
 <img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
 <img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
 
-9. Enjoy!
+10. Enjoy!
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 
