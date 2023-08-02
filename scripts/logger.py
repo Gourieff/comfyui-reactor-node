@@ -8,7 +8,7 @@ from modules import shared
 class ColoredFormatter(logging.Formatter):
     COLORS = {
         "DEBUG": "\033[0;36m",  # CYAN
-        "STATUS": "\033[38;5;137m",  # Calm ORANGE
+        "STATUS": "\033[38;5;173m",  # Calm ORANGE
         "INFO": "\033[0;32m",  # GREEN
         "WARNING": "\033[0;33m",  # YELLOW
         "ERROR": "\033[0;31m",  # RED
