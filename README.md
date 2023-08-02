@@ -32,7 +32,9 @@ Users of this software are expected to use this software responsibly while abidi
 <img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
 
 8. Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
-[image here]
+<img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
+<img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
+
 9. Enjoy!
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
@@ -41,7 +43,6 @@ Users of this software are expected to use this software responsibly while abidi
 2. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
 3. Run install.bat
 4. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
-[image here]
 
 ## Usage
 
