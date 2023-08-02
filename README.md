@@ -46,8 +46,7 @@ Users of this software are expected to use this software responsibly while abidi
 
 ## Usage
 
-Just coonect all required nodes and run the query
-[image here]
+Just connect all required nodes and run the query
 
 ## Troubleshooting
 
