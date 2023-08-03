@@ -1,5 +1,5 @@
 # ReActor Node 0.1.0 for ComfyUI
-### The Fast and Simple "roop-like" Face Swap Extension Node for ComfyUI, based on [ReActor (ex Roop-GE)](https://github.com/Gourieff/sd-webui-roop-nsfw) SD-WebUI Face Swap Extension
+### The Fast and Simple "roop-like" Face Swap Extension Node for ComfyUI, based on [ReActor (ex Roop-GE)](https://github.com/Gourieff/sd-webui-reactor) SD-WebUI Face Swap Extension
 
 > This Node goes without NSFW filter (uncensored, use it on your own responsibility) 
 
@@ -53,7 +53,7 @@ Just connect all required nodes and run the query
 
 **I. (For Windows users) If you still cannot build Insightface for some reasons or just don't want to install Visual Studio or VS C++ Build Tools - do the following:**
 
-1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-roop-nsfw/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (or SD.Next) root folder (where you have "webui-user.bat" file)
+1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (or SD.Next) root folder (where you have "webui-user.bat" file)
 2. From stable-diffusion-webui (or SD.Next) root folder run CMD and `.\venv\Scripts\activate`
 3. Then update your PIP: `python -m pip install -U pip`
 4. Then install Insightface: `pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
