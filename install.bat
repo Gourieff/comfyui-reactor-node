@@ -8,8 +8,8 @@ if not exist ..\..\..\python_embeded\python.exe (
 )
 
 :: Install the package
-echo Installing roop requirements...
+echo Installing...
 ..\..\..\python_embeded\python.exe install.py
-echo Finished installing roop requirements.
+echo Done!
 
 @pause
