@@ -22,21 +22,23 @@ Users of this software are expected to use this software responsibly while abidi
 
 <a name="sdwebui">If you use [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) or [SD.Next](https://github.com/vladmandic/automatic)
 
-1. Go to the `extensions\sd-webui-comfyui\ComfyUI\custom_nodes`
-2. Open Console or Terminal and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
-3. Go to the SD WebUI root folder, open Console or Terminal and run (Windows users)`.\venv\Scripts\activate` or (Linux/MacOS)`venv/bin/activate`
-4. `python -m pip install -U pip`
-5. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
-6. `python install.py`
-7. Please, wait until the installation process will be finished
-8. Run SD WebUI and check console for the message that ReActor Node is running:
+1. Close (stop) your SD-WebUI/Comfy Server if it's running
+2. (For Windows Users) Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community version - you need this step to build Insightface) -OR- only [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select "Desktop Development with C++" under "Workloads -> Desktop & Mobile" -OR- if you don't want to install VS or VS C++ BT - follow [this steps (sec. I)](#insightfacebuild)
+3. Go to the `extensions\sd-webui-comfyui\ComfyUI\custom_nodes`
+4. Open Console or Terminal and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
+5. Go to the SD WebUI root folder, open Console or Terminal and run (Windows users)`.\venv\Scripts\activate` or (Linux/MacOS)`venv/bin/activate`
+6. `python -m pip install -U pip`
+7. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
+8. `python install.py`
+9. Please, wait until the installation process will be finished
+10. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
 
-9. Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
+11. Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
 <img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
 <img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
 
-10. Enjoy!
+12. Enjoy!
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 
@@ -51,7 +53,7 @@ Just connect all required nodes and run the query
 
 ## Troubleshooting
 
-**I. (For Windows users) If you still cannot build Insightface for some reasons or just don't want to install Visual Studio or VS C++ Build Tools - do the following:**
+<a name="insightfacebuild">**I. (For Windows users) If you still cannot build Insightface for some reasons or just don't want to install Visual Studio or VS C++ Build Tools - do the following:**
 
 1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (or SD.Next) root folder (where you have "webui-user.bat" file)
 2. From stable-diffusion-webui (or SD.Next) root folder run CMD and `.\venv\Scripts\activate`
