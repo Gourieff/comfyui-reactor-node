@@ -1,4 +1,4 @@
-# ReActor Node 0.1.0 for ComfyUI
+# ReActor Node 0.1.1b for ComfyUI
 ### The Fast and Simple "roop-like" Face Swap Extension Node for ComfyUI, based on [ReActor (ex Roop-GE)](https://github.com/Gourieff/sd-webui-reactor) SD-WebUI Face Swap Extension
 
 > This Node goes without NSFW filter (uncensored, use it on your own responsibility) 
