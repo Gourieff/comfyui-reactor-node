@@ -55,10 +55,16 @@ Just connect all required nodes and run the query
 
 <a name="insightfacebuild">**I. (For Windows users) If you still cannot build Insightface for some reasons or just don't want to install Visual Studio or VS C++ Build Tools - do the following:**
 
-1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (or SD.Next) root folder (where you have "webui-user.bat" file)
-2. From stable-diffusion-webui (or SD.Next) root folder run CMD and `.\venv\Scripts\activate`
-3. Then update your PIP: `python -m pip install -U pip`
-4. Then install Insightface: `pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
+1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (A1111 or SD.Next) root folder (where you have "webui-user.bat" file) or into ComfyUI root folder if you use ComfyUI Portable
+2. From the root folder run:
+   - (SD WebUI) CMD and `.\venv\Scripts\activate`
+   - (ComfyUI Portable) run CMD
+3. Then update your PIP:
+   - (SD WebUI) `python -m pip install -U pip`
+   - (ComfyUI Portable) `python_embeded\python.exe -m pip install -U pip`
+4. Then install Insightface:
+   - (SD WebUI) `pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
+   - (ComfyUI Portable) `python_embeded\python.exe -m pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
 5. Enjoy!
 
 ## Updating
