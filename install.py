@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 req_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "requirements.txt")
 
-models_dir = os.path.abspath("models/roop")
+models_dir = os.path.abspath("models/insightface")
 
 model_url = "https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx"
 model_name = os.path.basename(model_url)
