@@ -57,10 +57,10 @@
 2. (Для пользователей Windows):
    - Установите [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Например, версию Community - этот шаг нужен для правильной компиляции библиотеки Insightface)
    - ИЛИ только [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/), выберите "Desktop Development with C++" в разделе "Workloads -> Desktop & Mobile"
-   - ИЛИ если же вы не хотите устанавливать что-либо из вышеуказанного - выполните [this steps (sec. I)](#insightfacebuild)
+   - ИЛИ если же вы не хотите устанавливать что-либо из вышеуказанного - выполните [данные шаги (раздел. I)](#insightfacebuild)
 3. Перейдите в `extensions\sd-webui-comfyui\ComfyUI\custom_nodes`
 4. Откройте Консоль или Терминал и выполните `git clone https://github.com/Gourieff/comfyui-reactor-node`
-5. Перейдите в коренвую директорию SD WebUI, откройте Консоль или Терминал и выполните(для пользователей Windows)`.\venv\Scripts\activate` или (для пользователей Linux/MacOS)`venv/bin/activate`
+5. Перейдите в корневую директорию SD WebUI, откройте Консоль или Терминал и выполните (для пользователей Windows)`.\venv\Scripts\activate` или (для пользователей Linux/MacOS)`venv/bin/activate`
 6. `python -m pip install -U pip`
 7. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
 8. `python install.py`
@@ -127,7 +127,7 @@ ReActor заменит только то лицо, которое удовлет
 
 Эта ошибка появляется, если что-то не так с файлом модели `inswapper_128.onnx`
 
-Скачайте вручную по ссылке [here](https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx)
+Скачайте вручную по ссылке [отсюда](https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx)
 и сохраните в директорию `ComfyUI\custom_nodes\comfyui-reactor-node\models\insightface`, заменив имеющийся файл
 
 ### **III. "reactor.execute() got an unexpected keyword argument 'reference_image'"**
