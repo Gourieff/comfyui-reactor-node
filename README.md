@@ -2,7 +2,7 @@
 
   <img src="uploads/ReActor_logo_red.png" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.2.0-brightgreen?style=for-the-badge&labelColor=darkgreen)<hr>
+  ![Version](https://img.shields.io/badge/node_version-0.3.0_beta1-green?style=for-the-badge&labelColor=darkgreen)<hr>
   [![Commit activity](https://img.shields.io/github/commit-activity/t/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)](https://github.com/Gourieff/comfyui-reactor-node/commits/main)
   ![Last commit](https://img.shields.io/github/last-commit/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)
   [![Opened issues](https://img.shields.io/github/issues/Gourieff/comfyui-reactor-node?color=red)](https://github.com/Gourieff/comfyui-reactor-node/issues?cacheSeconds=0)
@@ -22,7 +22,7 @@
 <div align="center">
 
 ---
-[**Installation**](#installation) | [**Usage**](#usage) | [**Troubleshooting**](#troubleshooting) | [**Updating**](#updating) | [**Disclaimer**](#disclaimer)
+[**Installation**](#installation) | [**Usage**](#usage) | [**Troubleshooting**](#troubleshooting) | [**Updating**](#updating) | [**Disclaimer**](#disclaimer) | [**Note!**](#note)
 
 ---
 
@@ -45,9 +45,13 @@
   </tr>
 </table>
 
+<div align="center">
+  <img src="uploads/demo.gif" alt="demo" width="100%"/>
+</div>
+
 ## Installation
 
-[SD WebUI](#sdwebui) | [Standalone ComfyUI](#standalone)
+[SD WebUI](#sdwebui) | [Standalone ComfyUI](#standalone) (recommended)
 
 <a name="sdwebui">If you use [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) or [SD.Next](https://github.com/vladmandic/automatic)
 
@@ -63,41 +67,49 @@
 7. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
 8. `python install.py`
 9.  Please, wait until the installation process will be finished
-10. Run SD WebUI and check console for the message that ReActor Node is running:
+10. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models` directory:
+    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
+    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+11. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
 
-11.  Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
+12.   Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
 <img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
 <img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
-
-12.  Enjoy!
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 
 1. Go to the `ComfyUI\custom_nodes` directory
 2. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
 3. Run `install.bat`
-4. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
+4. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models` directory:
+   - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
+   - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+5. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
 
 ## Usage
 
-Just connect all required nodes and run the query
+Just connect all required nodes and run the query.
+
+### Face Restoration
+
+From the version 0.3.0 ReActor Node has a buil-in face restoration.<br>Just download the models you want (see [Installation](#installation) instruction) and select one of them to restore the resulting face(s) during the faceswap. It will enhance face details and make your result more accurate.
 
 ### Face Indexes
 
 ReActor detects faces in images in the following order:<br>left->right, top->bottom
 
-And if you need to specify faces, you can set indexes for source and input images
+And if you need to specify faces, you can set indexes for source and input images.
 
-Index of the first detected face is 0
+Index of the first detected face is 0.
 
 You can set indexes in the order you need.<br>
-E.g.: 0,1,2 (for Source); 1,0,2 (for Input).<br>This means: the second Input face (index = 1) will be swapped by the first Source face (index = 0) and so on
+E.g.: 0,1,2 (for Source); 1,0,2 (for Input).<br>This means: the second Input face (index = 1) will be swapped by the first Source face (index = 0) and so on.
 
 ### Genders
 
-You can specify the gender to detect in images<br>
-ReActor will swap a face only if it meets the given condition
+You can specify the gender to detect in images.<br>
+ReActor will swap a face only if it meets the given condition.
 
 ## Troubleshooting
 
@@ -147,3 +159,11 @@ By using this extension you are agree not to create any content that:
 - propogates (spreads) any information (both public or personal) or images (both public or personal) which could be meant for harm;
 - spreads misinformation;
 - targets vulnerable groups of people.
+
+<a name="note">
+
+### Note!
+
+**If you encounter any errors when you use ReActor Node - don't rush to open an issue, first try to remove current ReActor node in your workflow and add it again**
+
+**ReActor Node gets updates from time to time, new functions appears and old node can work with errors or not work at all**

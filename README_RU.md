@@ -2,7 +2,7 @@
 
   <img src="uploads/ReActor_logo_red.png" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/версия_нода-0.2.0-brightgreen?style=for-the-badge&labelColor=darkgreen)<hr>
+  ![Version](https://img.shields.io/badge/версия_нода-0.3.0_beta1-green?style=for-the-badge&labelColor=darkgreen)<hr>
   [![Commit activity](https://img.shields.io/github/commit-activity/t/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)](https://github.com/Gourieff/comfyui-reactor-node/commits/main)
   ![Last commit](https://img.shields.io/github/last-commit/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)
   [![Opened issues](https://img.shields.io/github/issues/Gourieff/comfyui-reactor-node?color=red)](https://github.com/Gourieff/comfyui-reactor-node/issues?cacheSeconds=0)
@@ -45,11 +45,15 @@
   </tr>
 </table>
 
+<div align="center">
+  <img src="uploads/demo.gif" alt="logo" width="100%"/>
+</div>
+
 <a name="installation">
 
 ## Установка
 
-[SD WebUI](#sdwebui) | [Портативный ComfyUI](#standalone)
+[SD WebUI](#sdwebui) | [Портативный ComfyUI](#standalone) (рекомендуется)
 
 <a name="sdwebui">Если вы используете [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) или [SD.Next](https://github.com/vladmandic/automatic)
 
@@ -65,43 +69,53 @@
 7. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
 8. `python install.py`
 9.  Пожалуйста, дождитесь полного завершения установки
-10. Запустите SD WebUI и проверьте консоль на сообщение, что ReActor Node работает:
+10. (Начиная с версии 0.3.0) Скачайте модели восстановления лиц (по ссылкам ниже) и сохраните их в папку `extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models`:
+    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
+    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+11. Запустите SD WebUI и проверьте консоль на сообщение, что ReActor Node работает:
 <img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
 
-11.  Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
+1.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
 <img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
 <img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
 
-12.  Готово!
+1.   Готово!
 
 <a name="standalone">Если вы используете портативную версию [ComfyUI](https://github.com/comfyanonymous/ComfyUI) для Windows
 
 1. Перейдите в `ComfyUI\custom_nodes`
 2. Откройте Консоль и выполните `git clone https://github.com/Gourieff/comfyui-reactor-node`
 3. Запустите `install.bat`, дождитесь окончание установки
-4. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
+4. (Начиная с версии 0.3.0) Скачайте модели восстановления лиц (по ссылкам ниже) и сохраните их в папку `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models`:
+   - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
+   - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+5. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
 
 <a name="usage">
 
 ## Использование
 
-Соедините все необходимые узлы (nodes) и запустите очередь (query)
+Соедините все необходимые узлы (nodes) и запустите очередь (query).
+
+### Восстановление лиц
+
+Начиная с версии 0.3.0 ReActor Node имеет встроенное восстановление лиц.<br>Скачайте нужные вам модели (см. инструкцию по [Установке](#installation)) и выберите одну из них, чтобы улучшить качество финального лица.
 
 ### Индексы Лиц (Face Indexes)
 
-ReActor определяет лица на изображении в следующей последовательности:<br>слева-направо, сверху-вниз
+ReActor определяет лица на изображении в следующей последовательности:<br>слева-направо, сверху-вниз.
 
-Если вам нужно заменить определенное лицо, вы можете указать индекс для исходного (source, с лицом) и входного (input, где будет замена лица) изображений
+Если вам нужно заменить определенное лицо, вы можете указать индекс для исходного (source, с лицом) и входного (input, где будет замена лица) изображений.
 
-Индекс первого обнаруженного лица - 0
+Индекс первого обнаруженного лица - 0.
 
 Вы можете задать индексы в том порядке, который вам нужен.<br>
-Например: 0,1,2 (для Source); 1,0,2 (для Input).<br>Это означает, что: второе лицо из Input (индекс = 1) будет заменено первым лицом из Source (индекс = 0) и так далее
+Например: 0,1,2 (для Source); 1,0,2 (для Input).<br>Это означает, что: второе лицо из Input (индекс = 1) будет заменено первым лицом из Source (индекс = 0) и так далее.
 
 ### Определение Пола
 
-Вы можете обозначить, какой пол нужно определять на изображении<br>
-ReActor заменит только то лицо, которое удовлетворяет заданному условию
+Вы можете обозначить, какой пол нужно определять на изображении.<br>
+ReActor заменит только то лицо, которое удовлетворяет заданному условию.
 
 <a name="troubleshooting">
 
@@ -157,3 +171,11 @@ ReActor заменит только то лицо, которое удовлет
 - пропагандируют любую информацию (как общедоступную, так и личную) или изображения (как общедоступные, так и личные), которые могут быть направлены на причинение вреда;
 - используются для распространения дезинформации;
 - нацелены на уязвимые группы людей.
+
+<a name="note">
+
+### Обратите внимание!
+
+**Если у вас возникли какие-либо ошибки при очередном использовании Нода ReActor - не торопитесь открывать Issue, для начала попробуйте удалить текущий Нод из вашего рабочего пространства и добавить его снова**
+
+**ReActor Node периодически получает обновления, появляются новые функции, из-за чего имеющийся Нод может работать с ошибками или не работать вовсе**

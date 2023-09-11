@@ -4,3 +4,4 @@ __pycache__/
 example
 models
 input
+!facelib/detection/yolov5face/models
