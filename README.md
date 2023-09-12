@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="uploads/ReActor_logo_red.png" alt="logo" width="180px"/>
+  <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/ReActor_logo_red.png?raw=true" alt="logo" width="180px"/>
 
   ![Version](https://img.shields.io/badge/node_version-0.3.0_beta1-green?style=for-the-badge&labelColor=darkgreen)<hr>
   [![Commit activity](https://img.shields.io/github/commit-activity/t/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)](https://github.com/Gourieff/comfyui-reactor-node/commits/main)
@@ -46,7 +46,7 @@
 </table>
 
 <div align="center">
-  <img src="uploads/demo.gif" alt="demo" width="100%"/>
+  <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/demo.gif?raw=true" alt="demo" width="100%"/>
 </div>
 
 ## Installation
@@ -71,11 +71,11 @@
     - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
     - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
 11. Run SD WebUI and check console for the message that ReActor Node is running:
-<img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
 12.   Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
-<img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
-<img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 

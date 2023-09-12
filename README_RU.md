@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="uploads/ReActor_logo_red.png" alt="logo" width="180px"/>
+  <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/ReActor_logo_red.png?raw=true" alt="logo" width="180px"/>
 
   ![Version](https://img.shields.io/badge/версия_нода-0.3.0_beta1-green?style=for-the-badge&labelColor=darkgreen)<hr>
   [![Commit activity](https://img.shields.io/github/commit-activity/t/Gourieff/comfyui-reactor-node/main?cacheSeconds=0)](https://github.com/Gourieff/comfyui-reactor-node/commits/main)
@@ -46,7 +46,7 @@
 </table>
 
 <div align="center">
-  <img src="uploads/demo.gif" alt="logo" width="100%"/>
+  <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/demo.gif?raw=true" alt="logo" width="100%"/>
 </div>
 
 <a name="installation">
@@ -73,11 +73,11 @@
     - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
     - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
 11. Запустите SD WebUI и проверьте консоль на сообщение, что ReActor Node работает:
-<img src="uploads/console_status_running.jpg" alt="console_status_running" width="759"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
 1.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
-<img src="uploads/webui-demo.png" alt="webui-demo" width="100%"/>
-<img src="uploads/search-demo.png" alt="webui-demo" width="1043"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
 1.   Готово!
 
