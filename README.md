@@ -79,13 +79,17 @@
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 
-1. Go to the `ComfyUI\custom_nodes` directory
-2. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
-3. Run `install.bat`
-4. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models` directory:
+1. (For Windows Users):
+   - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community version - you need this step to build Insightface)
+   - OR only [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select "Desktop Development with C++" under "Workloads -> Desktop & Mobile"
+   - OR if you don't want to install VS or VS C++ BT - follow [this steps (sec. I)](#insightfacebuild)
+2. Go to the `ComfyUI\custom_nodes` directory
+3. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
+4. Run `install.bat`
+5. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models` directory:
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
-5. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
+6. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
 
 ## Usage
 

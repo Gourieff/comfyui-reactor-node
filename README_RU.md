@@ -75,21 +75,23 @@
 11. Запустите SD WebUI и проверьте консоль на сообщение, что ReActor Node работает:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
-1.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
+12.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
-1.   Готово!
-
 <a name="standalone">Если вы используете портативную версию [ComfyUI](https://github.com/comfyanonymous/ComfyUI) для Windows
 
-1. Перейдите в `ComfyUI\custom_nodes`
-2. Откройте Консоль и выполните `git clone https://github.com/Gourieff/comfyui-reactor-node`
-3. Запустите `install.bat`, дождитесь окончание установки
-4. (Начиная с версии 0.3.0) Скачайте модели восстановления лиц (по ссылкам ниже) и сохраните их в папку `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models`:
+1. (Для пользователей Windows):
+   - Установите [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Например, версию Community - этот шаг нужен для правильной компиляции библиотеки Insightface)
+   - ИЛИ только [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/), выберите "Desktop Development with C++" в разделе "Workloads -> Desktop & Mobile"
+   - ИЛИ если же вы не хотите устанавливать что-либо из вышеуказанного - выполните [данные шаги (раздел. I)](#insightfacebuild)
+2. Перейдите в `ComfyUI\custom_nodes`
+3. Откройте Консоль и выполните `git clone https://github.com/Gourieff/comfyui-reactor-node`
+4. Запустите `install.bat`, дождитесь окончание установки
+5. (Начиная с версии 0.3.0) Скачайте модели восстановления лиц (по ссылкам ниже) и сохраните их в папку `ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models`:
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
-5. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
+6. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
 
 <a name="usage">
 
