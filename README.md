@@ -79,7 +79,7 @@
 
 <a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
 
-1. (For Windows Users):
+1. Do the following:
    - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community version - you need this step to build Insightface)
    - OR only [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select "Desktop Development with C++" under "Workloads -> Desktop & Mobile"
    - OR if you don't want to install VS or VS C++ BT - follow [this steps (sec. I)](#insightfacebuild)

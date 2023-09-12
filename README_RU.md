@@ -81,7 +81,7 @@
 
 <a name="standalone">Если вы используете портативную версию [ComfyUI](https://github.com/comfyanonymous/ComfyUI) для Windows
 
-1. (Для пользователей Windows):
+1. Сделайте следующее:
    - Установите [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Например, версию Community - этот шаг нужен для правильной компиляции библиотеки Insightface)
    - ИЛИ только [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/), выберите "Desktop Development with C++" в разделе "Workloads -> Desktop & Mobile"
    - ИЛИ если же вы не хотите устанавливать что-либо из вышеуказанного - выполните [данные шаги (раздел. I)](#insightfacebuild)
