@@ -51,9 +51,8 @@
 
 ## Installation
 
-[SD WebUI](#sdwebui) | [Standalone ComfyUI](#standalone) (recommended)
-
-<a name="sdwebui">If you use [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) or [SD.Next](https://github.com/vladmandic/automatic)
+<details>
+	<summary>SD WebUI: <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui/">AUTOMATIC1111</a> or <a href="https://github.com/vladmandic/automatic">SD.Next</a></summary>
 
 1. Close (stop) your SD-WebUI/Comfy Server if it's running
 2. (For Windows Users):
@@ -73,11 +72,14 @@
 11. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
-12.   Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
+1.  Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
-<a name="standalone">If you use Standalone [ComfyUI](https://github.com/comfyanonymous/ComfyUI) for Windows
+</details>
+
+<details>
+	<summary>Standalone (Portable) <a href="https://github.com/comfyanonymous/ComfyUI">ComfyUI</a> for Windows</summary>
 
 1. Do the following:
    - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community version - you need this step to build Insightface)
@@ -90,6 +92,8 @@
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
 6. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
+
+</details>
 
 ## Usage
 
@@ -121,17 +125,18 @@ ReActor will swap a face only if it meets the given condition.
 
 ### **I. (For Windows users) If you still cannot build Insightface for some reasons or just don't want to install Visual Studio or VS C++ Build Tools - do the following:**
 
-1. Download and put [prebuilt Insightface package](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) into the stable-diffusion-webui (A1111 or SD.Next) root folder (where you have "webui-user.bat" file) or into ComfyUI root folder if you use ComfyUI Portable
-2. From the root folder run:
+1. (ComfyUI Portable) From the root folder check the version of Python:<br>run CMD and type `python_embeded\python.exe -V`
+2. Download prebuilt Insightface package [for Python 3.10](https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp310-cp310-win_amd64.whl) or [for Python 3.11](https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp311-cp311-win_amd64.whl) (if in the previous step you see 3.11) and put into the stable-diffusion-webui (A1111 or SD.Next) root folder (where you have "webui-user.bat" file) or into ComfyUI root folder if you use ComfyUI Portable
+3. From the root folder run:
    - (SD WebUI) CMD and `.\venv\Scripts\activate`
    - (ComfyUI Portable) run CMD
-3. Then update your PIP:
+4. Then update your PIP:
    - (SD WebUI) `python -m pip install -U pip`
    - (ComfyUI Portable) `python_embeded\python.exe -m pip install -U pip`
-4. Then install Insightface:
+5. Then install Insightface:
    - (SD WebUI) `pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
    - (ComfyUI Portable) `python_embeded\python.exe -m pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
-5. Enjoy!
+6. Enjoy!
 
 ### **II. "AttributeError: 'NoneType' object has no attribute 'get'"**
 

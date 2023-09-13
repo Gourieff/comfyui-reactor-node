@@ -53,9 +53,8 @@
 
 ## Установка
 
-[SD WebUI](#sdwebui) | [Портативный ComfyUI](#standalone) (рекомендуется)
-
-<a name="sdwebui">Если вы используете [AUTOMATIC1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui/) или [SD.Next](https://github.com/vladmandic/automatic)
+<details>
+	<summary>SD WebUI: <a href="https://github.com/AUTOMATIC1111/stable-diffusion-webui/">AUTOMATIC1111</a> или <a href="https://github.com/vladmandic/automatic">SD.Next</a></summary>
 
 1. Закройте (остановите) SD-WebUI Сервер, если запущен
 2. (Для пользователей Windows):
@@ -79,7 +78,10 @@
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
-<a name="standalone">Если вы используете портативную версию [ComfyUI](https://github.com/comfyanonymous/ComfyUI) для Windows
+</details>
+
+<details>
+	<summary>Портативная версия <a href="https://github.com/comfyanonymous/ComfyUI">ComfyUI</a> для Windows</summary>
 
 1. Сделайте следующее:
    - Установите [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Например, версию Community - этот шаг нужен для правильной компиляции библиотеки Insightface)
@@ -92,6 +94,8 @@
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
 6. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
+
+</details>
 
 <a name="usage">
 
@@ -127,17 +131,18 @@ ReActor заменит только то лицо, которое удовлет
 
 ### **I. (Для пользователей Windows) Если вы до сих пор не можете установить пакет Insightface по каким-то причинам или же просто не желаете устанавливать Visual Studio или VS C++ Build Tools - сделайте следующее:**
 
-1. Скачайте готовый [пакет Insightface](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) и сохраните его в корневую директорию stable-diffusion-webui (A1111 или SD.Next) - туда, где лежит файл "webui-user.bat" -ИЛИ- в корневую директорию ComfyUI, если вы используете ComfyUI Portable
-2. Из корневой директории запустите:
+1. (ComfyUI Portable) Находясь в корневой директории, проверьте версию Python:<br>запустите CMD и выполните `python_embeded\python.exe -V`<br>Вы должны увидеть версию или 3.10, или 3.11
+2. Скачайте готовый пакет Insightface [для версии 3.10](https://github.com/Gourieff/sd-webui-reactor/raw/main/example/insightface-0.7.3-cp310-cp310-win_amd64.whl) или [для 3.11](https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp311-cp311-win_amd64.whl) (если на предыдущем шаге вы увидели 3.11) и сохраните его в корневую директорию stable-diffusion-webui (A1111 или SD.Next) - туда, где лежит файл "webui-user.bat" -ИЛИ- в корневую директорию ComfyUI, если вы используете ComfyUI Portable
+3. Из корневой директории запустите:
    - (SD WebUI) CMD и `.\venv\Scripts\activate`
    - (ComfyUI Portable) CMD
-3. Обновите PIP:
+4. Обновите PIP:
    - (SD WebUI) `python -m pip install -U pip`
    - (ComfyUI Portable) `python_embeded\python.exe -m pip install -U pip`
-4. Затем установите Insightface:
+5. Затем установите Insightface:
    - (SD WebUI) `pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
    - (ComfyUI Portable) `python_embeded\python.exe -m pip install insightface-0.7.3-cp310-cp310-win_amd64.whl`
-5. Готово!
+6. Готово!
 
 ### **II. "AttributeError: 'NoneType' object has no attribute 'get'"**
 
