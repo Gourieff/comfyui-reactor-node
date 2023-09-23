@@ -30,9 +30,9 @@
 
 <table>
   <tr>
-    <td width="144px">
+    <td width="134px">
       <a href="https://boosty.to/artgourieff" target="_blank">
-        <img src="https://lovemet.ru/www/boosty.jpg" width="108" alt="Support Me on Boosty"/>
+        <img src="https://lovemet.ru/www/boosty.jpg" width="108" alt="Поддержать проект на Boosty"/>
         <br>
         <sup>
           Поддержать проект
@@ -41,6 +41,15 @@
     </td>
     <td>
       ReActor Node это расширение для ComfyUI, которое позволяет делать простую и точную замену лиц на изображениях
+    </td>
+    <td width="144px">
+      <a href="https://paypal.me/artgourieff" target="_blank">
+        <img src="https://www.paypalobjects.com/digitalassets/c/website/logo/full-text/pp_fc_hl.svg" width="108" alt="Поддержать проект через PayPal"/>
+        <br>
+        <sup>
+          Помочь проекту
+        </sup>
+      </a>
     </td>
   </tr>
 </table>

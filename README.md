@@ -30,7 +30,7 @@
 
 <table>
   <tr>
-    <td width="144px">
+    <td width="134px">
       <a href="https://boosty.to/artgourieff" target="_blank">
         <img src="https://lovemet.ru/www/boosty.jpg" width="108" alt="Support Me on Boosty"/>
         <br>
@@ -41,6 +41,15 @@
     </td>
     <td>
       ReActor Node is an extension for ComfyUI that allows a very easy and accurate face-replacement (face swap) in images
+    </td>
+    <td width="144px">
+      <a href="https://paypal.me/artgourieff" target="_blank">
+        <img src="https://www.paypalobjects.com/digitalassets/c/website/logo/full-text/pp_fc_hl.svg" width="108" alt="Support Me via PayPal"/>
+        <br>
+        <sup>
+          Donate to This Project
+        </sup>
+      </a>
     </td>
   </tr>
 </table>
