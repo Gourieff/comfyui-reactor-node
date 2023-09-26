@@ -165,6 +165,16 @@ ReActor заменит только то лицо, которое удовлет
 Это означает, что поменялось обозначение входных точек (input points) всвязи с последним обновлением<br>
 Удалите из вашего рабочего пространства имеющийся ReActor Node и добавьте его снова
 
+### **IV. ControlNet Aux Node IMPORT failed - при использовании совместно с нодом ReActor**
+
+1. Закройте или остановите ComfyUI сервер, если он запущен
+2. Перейдите в корневую папку ComfyUI, откройте консоль CMD и выполните следующее:
+   - `python_embeded\python.exe -m pip uninstall -y opencv-python opencv-contrib-python opencv-python-headless`
+   - `python_embeded\python.exe -m pip install opencv-python==4.7.0.72`
+3. Готово!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/reactor-w-controlnet.png?raw=true" alt="reactor+controlnet" />
+
 <a name="updating">
 
 ## Обновление

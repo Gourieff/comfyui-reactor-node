@@ -159,6 +159,16 @@ and put it to the `ComfyUI\custom_nodes\comfyui-reactor-node\models\insightface`
 This means that input points have been changed with the latest update<br>
 Remove the current ReActor Node from your workflow and add it again
 
+### **IV. ControlNet Aux Node IMPORT failed error when using with ReActor Node**
+
+1. Close ComfyUI if it runs
+2. Go to the ComfyUI root folder, open CMD there and run:
+   - `python_embeded\python.exe -m pip uninstall -y opencv-python opencv-contrib-python opencv-python-headless`
+   - `python_embeded\python.exe -m pip install opencv-python==4.7.0.72`
+3. That's it!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/reactor-w-controlnet.png?raw=true" alt="reactor+controlnet" />
+
 ## Updating
 
 Just put .bat or .sh script from this [Repo](https://github.com/Gourieff/sd-webui-extensions-updater) to the `ComfyUI\custom_nodes` directory and run it when you need to check for updates
