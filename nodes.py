@@ -1,7 +1,8 @@
-import os, glob
+import os, glob, sys
+import shutil
 from modules.processing import StableDiffusionProcessingImg2Img
 from scripts.reactor_faceswap import FaceSwapScript, get_models
-from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img
+from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img, move_path
 from reactor_log_patch import apply_logging_patch
 
 import model_management
@@ -10,15 +11,19 @@ import comfy.utils
 import numpy as np
 import cv2
 # import math
-from facelib.utils.face_restoration_helper import FaceRestoreHelper
+from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
 # from facelib.detection.retinaface import retinaface
 from torchvision.transforms.functional import normalize
 from comfy_extras.chainner_models import model_loading
+import folder_paths
 
+models_dir = folder_paths.models_dir
 
 def get_restorers():
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    models_path = os.path.join(basedir, "models/facerestore_models/*")
+    # basedir = os.path.abspath(os.path.dirname(__file__))
+    # global MODELS_DIR
+    # models_path = os.path.join(basedir, "models/facerestore_models/*")
+    models_path = os.path.join(models_dir, "facerestore_models/*")
     models = glob.glob(models_path)
     models = [x for x in models if x.endswith(".pth")]
     return models
@@ -34,11 +39,17 @@ def model_names():
     models = get_models()
     return {os.path.basename(x): x for x in models}
 
-models_dir = os.path.join(os.path.dirname(__file__), "models")
+models_dir_old = os.path.join(os.path.dirname(__file__), "models")
+old_dir_facerestore_models = os.path.join(models_dir_old, "facerestore_models")
 
 dir_facerestore_models = os.path.join(models_dir, "facerestore_models")
 os.makedirs(dir_facerestore_models, exist_ok=True)
+folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
 
+if os.path.exists(old_dir_facerestore_models):
+    move_path(old_dir_facerestore_models,dir_facerestore_models)
+if os.path.exists(dir_facerestore_models) and os.path.exists(old_dir_facerestore_models):
+    shutil.rmtree(old_dir_facerestore_models)
 
 class reactor:
     @classmethod
@@ -50,6 +61,7 @@ class reactor:
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (restorer_names(),),
+                # "coderformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.1}), # list(np.arange(0,1,0.1)
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "detect_gender_input": (["no","female","male"], {"default": "no"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
@@ -89,8 +101,9 @@ class reactor:
         # face restoration
 
         if face_restore_model != "none":
-            
-            model_path = os.path.join(os.path.dirname(__file__), "models", "facerestore_models", face_restore_model)
+
+            # model_path = os.path.join(os.path.dirname(__file__), "models", "facerestore_models", face_restore_model)
+            model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
             sd = comfy.utils.load_torch_file(model_path, safe_load=True)
             facerestore_model = model_loading.load_state_dict(sd).eval()
 

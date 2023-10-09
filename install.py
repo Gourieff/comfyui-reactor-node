@@ -1,18 +1,21 @@
 import subprocess
-import os, sys
+import os, sys, shutil
 import pkg_resources
 from tqdm import tqdm
 import urllib.request
 from packaging import version as pv
+import folder_paths
+
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 req_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "requirements.txt")
 
-models_dir = os.path.abspath("models/insightface")
-
 model_url = "https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx"
 model_name = os.path.basename(model_url)
+models_dir = os.path.join(folder_paths.models_dir, "insightface")
 model_path = os.path.join(models_dir, model_name)
+models_dir_old = os.path.abspath("models/insightface")
+model_path_old = os.path.join(models_dir_old, model_name)
 
 def run_pip(*args):
     subprocess.run([sys.executable, "-m", "pip", "install", *args])
@@ -43,6 +46,9 @@ def download(url, path):
 
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
+
+if os.path.exists(models_dir_old):
+    shutil.move(model_path_old, model_path)
 
 if not os.path.exists(model_path):
     download(model_url, model_path)

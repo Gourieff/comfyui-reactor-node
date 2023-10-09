@@ -1,3 +1,4 @@
+import os
 from PIL import Image
 import numpy as np
 import torch
@@ -87,3 +88,16 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     if len(result) == 1:
         result = result[0]
     return result
+
+def move_path(old_path, new_path):
+    if os.path.exists(old_path):
+        try:
+            models = os.listdir(old_path)
+            for model in models:
+                move_old_path = os.path.join(old_path, model)
+                move_new_path = os.path.join(new_path, model)
+                os.rename(move_old_path, move_new_path)
+            os.rmdir(old_path)
+        except Exception as e:
+            print(f"Error: {e}")
+            new_path = old_path

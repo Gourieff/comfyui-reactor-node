@@ -1,5 +1,6 @@
 import sys
 import os
+
 repo_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, repo_dir)
 original_modules = sys.modules.copy()
@@ -13,7 +14,7 @@ modules_used = [
     "modules.scripts_postprocessing",
     "modules.scripts",
     "modules.shared",
-    "modules.upscaler"
+    "modules.upscaler",
 ]
 original_webui_modules = {}
 for module in modules_used:
@@ -22,6 +23,7 @@ for module in modules_used:
 
 # Proceed with node setup
 from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
+
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
 
 # Clean up imports

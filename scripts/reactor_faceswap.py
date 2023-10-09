@@ -1,3 +1,7 @@
+import os, glob
+
+from PIL import Image
+
 import modules.scripts as scripts
 # from modules.upscaler import Upscaler, UpscalerData
 from modules import scripts, shared, images, scripts_postprocessing
@@ -5,17 +9,15 @@ from modules.processing import (
     StableDiffusionProcessing,
     StableDiffusionProcessingImg2Img,
 )
-from PIL import Image
-import glob
-
 from scripts.reactor_logger import logger
 from scripts.reactor_swapper import swap_face
-import os
+import folder_paths
+
 
 def get_models():
     models_path_old = os.path.join(scripts.basedir(),"models","roop")
     if os.path.exists(models_path_old):
-        models_path = os.path.join(scripts.basedir(),"models","insightface")
+        models_path = os.path.join(folder_paths.models_dir,"insightface")
         try:
             models = os.listdir(models_path_old)
             for model in models:
@@ -27,7 +29,7 @@ def get_models():
             models_path = models_path_old
         finally:
             os.rmdir(models_path_old)
-    models_path = os.path.join(scripts.basedir(),"models/insightface/*")
+    models_path = os.path.join(folder_paths.models_dir,"insightface/*")
     models = glob.glob(models_path)
     models = [x for x in models if x.endswith(".onnx") or x.endswith(".pth")]
     return models

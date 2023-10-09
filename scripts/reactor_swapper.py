@@ -1,5 +1,6 @@
 import copy
 import os
+import shutil
 from dataclasses import dataclass
 from typing import List, Union
 
@@ -10,6 +11,8 @@ from PIL import Image
 import insightface
 
 from scripts.reactor_logger import logger
+from reactor_utils import move_path
+import folder_paths
 
 import warnings
 
@@ -18,10 +21,21 @@ np.warnings.filterwarnings('ignore')
 
 providers = ["CPUExecutionProvider"]
 
-models_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+models_path_old = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
+insightface_path_old = os.path.join(models_path_old, "insightface")
+insightface_models_path_old = os.path.join(insightface_path_old, "models")
+
+models_path = folder_paths.models_dir
 insightface_path = os.path.join(models_path, "insightface")
 insightface_models_path = os.path.join(insightface_path, "models")
-swapper_path = os.path.join(models_path, "insightface")
+
+if os.path.exists(models_path_old):
+    move_path(insightface_models_path_old, insightface_models_path)
+    move_path(insightface_path_old, insightface_path)
+    move_path(models_path_old, models_path)
+if os.path.exists(insightface_path) and os.path.exists(insightface_path_old):
+    shutil.rmtree(insightface_path_old)
+    shutil.rmtree(models_path_old)
 
 
 FS_MODEL = None
@@ -140,7 +154,7 @@ def swap_face(
             logger.info(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
         elif source_face is not None:
             result = target_img
-            model_path = model_path = os.path.join(swapper_path, model)
+            model_path = model_path = os.path.join(insightface_path, model)
             face_swapper = getFaceSwapModel(model_path)
 
             source_face_idx = 0
