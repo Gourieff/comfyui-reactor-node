@@ -87,14 +87,20 @@ def get_face_gender(
         return sorted(face, key=lambda x: x.bbox[0])[face_index], 1
 
 
-def reget_face_single(img_data, det_size, face_index):
-    det_size_half = (det_size[0] // 2, det_size[1] // 2)
-    return get_face_single(img_data, face_index=face_index, det_size=det_size_half)
+# def reget_face_single(img_data, det_size, face_index):
+#     det_size_half = (det_size[0] // 2, det_size[1] // 2)
+#     return get_face_single(img_data, face_index=face_index, det_size=det_size_half)
 
-def get_face_single(img_data: np.ndarray, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0):
+def half_det_size(det_size):
+    logger.info("Trying to halve 'det_size' parameter")
+    return (det_size[0] // 2, det_size[1] // 2)
+
+def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
     face_analyser = copy.deepcopy(getAnalysisModel())
     face_analyser.prepare(ctx_id=0, det_size=det_size)
-    face = face_analyser.get(img_data)
+    return face_analyser.get(img_data)
+
+def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0):
 
     buffalo_path = os.path.join(insightface_models_path, "buffalo_l.zip")
     if os.path.exists(buffalo_path):
@@ -102,16 +108,20 @@ def get_face_single(img_data: np.ndarray, face_index=0, det_size=(640, 640), gen
 
     if gender_source != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
-            return reget_face_single(img_data, det_size, face_index)
+            # return reget_face_single(img_data, det_size, face_index)
+            det_size_half = half_det_size(det_size)
+            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
         return get_face_gender(face,face_index,gender_source,"Source")
 
     if gender_target != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
-            return reget_face_single(img_data, det_size, face_index)
+            det_size_half = half_det_size(det_size)
+            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
         return get_face_gender(face,face_index,gender_target,"Target")
     
     if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
-        return reget_face_single(img_data, det_size, face_index)
+        det_size_half = half_det_size(det_size)
+        return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
 
     try:
         return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
@@ -148,43 +158,53 @@ def swap_face(
         source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
 
-        source_face, wrong_gender = get_face_single(source_img, face_index=source_faces_index[0], gender_source=gender_source)
+        logger.info("Analyzing Source Image...")
+        source_faces = analyze_faces(source_img)
 
-        if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
-            logger.info(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
-        elif source_face is not None:
-            result = target_img
-            model_path = model_path = os.path.join(insightface_path, model)
-            face_swapper = getFaceSwapModel(model_path)
+        if source_faces is not None:
 
-            source_face_idx = 0
+            logger.info("Analyzing Target Image...")
+            target_faces = analyze_faces(target_img)
 
-            for face_num in faces_index:
-                if len(source_faces_index) > 1 and source_face_idx > 0:
-                    source_face, wrong_gender = get_face_single(source_img, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
-                source_face_idx += 1
+            source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
 
-                if source_face is not None and wrong_gender == 0:
-                    target_face, wrong_gender = get_face_single(target_img, face_index=face_num, gender_target=gender_target)
-                    if target_face is not None and wrong_gender == 0:
-                        result = face_swapper.get(result, target_face, source_face)
+            if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
+                logger.info(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
+            elif source_face is not None:
+                result = target_img
+                model_path = model_path = os.path.join(insightface_path, model)
+                face_swapper = getFaceSwapModel(model_path)
+
+                source_face_idx = 0
+
+                for face_num in faces_index:
+                    if len(source_faces_index) > 1 and source_face_idx > 0:
+                        source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
+                    source_face_idx += 1
+
+                    if source_face is not None and wrong_gender == 0:
+                        target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target)
+                        if target_face is not None and wrong_gender == 0:
+                            result = face_swapper.get(result, target_face, source_face)
+                        elif wrong_gender == 1:
+                            wrong_gender = 0
+                            if source_face_idx == len(source_faces_index):
+                                result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                                return result_image
+                        else:
+                            logger.info(f"No target face found for {face_num}")
                     elif wrong_gender == 1:
                         wrong_gender = 0
                         if source_face_idx == len(source_faces_index):
                             result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
                             return result_image
                     else:
-                        logger.info(f"No target face found for {face_num}")
-                elif wrong_gender == 1:
-                    wrong_gender = 0
-                    if source_face_idx == len(source_faces_index):
-                        result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-                        return result_image
-                else:
-                    logger.info(f"No source face found for face number {source_face_idx}.")
+                        logger.info(f"No source face found for face number {source_face_idx}.")
 
-            result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
 
+            else:
+                logger.info("No source face(s) in the provided Index")
         else:
             logger.info("No source face(s) found")
     return result_image
