@@ -1,4 +1,5 @@
 import copy
+import re
 import os
 from pathlib import Path
 
@@ -17,8 +18,15 @@ from r_facelib.detection.yolov5face.utils.general import (
     scale_coords_landmarks,
 )
 
-IS_HIGH_VERSION = tuple(map(int, torch.__version__.split('+')[0].split('.'))) >= (1, 9, 0)
+# Use regular expression to extract the numeric part of the version string
+version_match = re.match(r'(\d+\.\d+\.\d+)', torch.__version__)
+if version_match:
+    numeric_version = tuple(map(int, version_match.group(1).split('.')))
+else:
+    numeric_version = (0, 0, 0)  # Set a default version if no match is found
 
+# Check if the numeric version is greater than or equal to (1, 9, 0)
+IS_HIGH_VERSION = numeric_version >= (1, 9, 0)
 
 def isListempty(inList):
     if isinstance(inList, list): # Is a list
