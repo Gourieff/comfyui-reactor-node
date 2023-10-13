@@ -56,7 +56,7 @@ class reactor:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "enabled": ("BOOLEAN", {"default": False, "label_off": "OFF", "label_on": "ON"}),
+                "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
                 "source_image": ("IMAGE",),
                 "input_image": ("IMAGE",),               
                 "swap_model": (list(model_names().keys()),),
