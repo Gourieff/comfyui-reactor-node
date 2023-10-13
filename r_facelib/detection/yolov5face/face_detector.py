@@ -1,11 +1,10 @@
 import copy
-import os
 from pathlib import Path
 
 import cv2
 import numpy as np
 import torch
-from torch import nn
+from torch import torch_version
 
 from r_facelib.detection.yolov5face.models.common import Conv
 from r_facelib.detection.yolov5face.models.yolo import Model
@@ -17,8 +16,8 @@ from r_facelib.detection.yolov5face.utils.general import (
     scale_coords_landmarks,
 )
 
-IS_HIGH_VERSION = tuple(map(int, torch.__version__.split('+')[0].split('.'))) >= (1, 9, 0)
-
+print(f"Torch version: {torch.__version__}")
+IS_HIGH_VERSION = torch_version.__version__ >= "1.9.0"
 
 def isListempty(inList):
     if isinstance(inList, list): # Is a list
