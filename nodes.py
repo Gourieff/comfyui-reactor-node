@@ -56,7 +56,7 @@ class reactor:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "switch": ("BOOLEAN", {"default": False, "label_off": "OFF", "label_on": "ON"}),
+                "enabled": ("BOOLEAN", {"default": False, "label_off": "OFF", "label_on": "ON"}),
                 "source_image": ("IMAGE",),
                 "input_image": ("IMAGE",),               
                 "swap_model": (list(model_names().keys()),),
@@ -78,10 +78,10 @@ class reactor:
     def __init__(self):
         self.face_helper = None
 
-    def execute(self, switch, source_image, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection):
+    def execute(self, enabled, source_image, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection):
         apply_logging_patch(console_log_level)
 
-        if not switch:
+        if not enabled:
             return (input_image,)
 
         script = FaceSwapScript()
