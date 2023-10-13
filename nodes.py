@@ -57,8 +57,8 @@ class reactor:
         return {
             "required": {
                 "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
-                "source_image": ("IMAGE",),
                 "input_image": ("IMAGE",),               
+                "source_image": ("IMAGE",),
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (restorer_names(),),
