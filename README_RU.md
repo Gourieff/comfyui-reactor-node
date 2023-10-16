@@ -158,7 +158,7 @@ ReActor заменит только то лицо, которое удовлет
 Эта ошибка появляется, если что-то не так с файлом модели `inswapper_128.onnx`
 
 Скачайте вручную по ссылке [отсюда](https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx)
-и сохраните в директорию `ComfyUI\custom_nodes\comfyui-reactor-node\models\insightface`, заменив имеющийся файл
+и сохраните в директорию `ComfyUI\models\insightface`, заменив имеющийся файл
 
 ### **III. "reactor.execute() got an unexpected keyword argument 'reference_image'"**
 

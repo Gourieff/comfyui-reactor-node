@@ -152,7 +152,7 @@ ReActor will swap a face only if it meets the given condition.
 This error may occur if there's smth wrong with the model file `inswapper_128.onnx`
 
 Try to download it manually from [here](https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx)
-and put it to the `ComfyUI\custom_nodes\comfyui-reactor-node\models\insightface` replacing existing one
+and put it to the `ComfyUI\models\insightface` replacing existing one
 
 ### **III. "reactor.execute() got an unexpected keyword argument 'reference_image'"**
 
