@@ -4,7 +4,12 @@ import pkg_resources
 from tqdm import tqdm
 import urllib.request
 from packaging import version as pv
-import folder_paths
+try:
+    from folder_paths import models_dir
+except:
+    from pathlib import Path
+    models_dir = os.path.join(Path(__file__).parents[1], "models")
+
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
@@ -12,8 +17,8 @@ req_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "requiremen
 
 model_url = "https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx"
 model_name = os.path.basename(model_url)
-models_dir = os.path.join(folder_paths.models_dir, "insightface")
-model_path = os.path.join(models_dir, model_name)
+models_dir_path = os.path.join(models_dir, "insightface")
+model_path = os.path.join(models_dir_path, model_name)
 models_dir_old = os.path.abspath("models/insightface")
 model_path_old = os.path.join(models_dir_old, model_name)
 
@@ -44,8 +49,8 @@ def download(url, path):
     with tqdm(total=total, desc='Downloading', unit='B', unit_scale=True, unit_divisor=1024) as progress:
         urllib.request.urlretrieve(url, path, reporthook=lambda count, block_size, total_size: progress.update(block_size))
 
-if not os.path.exists(models_dir):
-    os.makedirs(models_dir)
+if not os.path.exists(models_dir_path):
+    os.makedirs(models_dir_path)
 
 if os.path.exists(models_dir_old):
     shutil.move(model_path_old, model_path)
