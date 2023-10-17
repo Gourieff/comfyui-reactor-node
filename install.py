@@ -8,8 +8,7 @@ try:
     from folder_paths import models_dir
 except:
     from pathlib import Path
-    models_dir = os.path.join(Path(__file__).parents[1], "models")
-
+    models_dir = os.path.join(Path(__file__).parents[2], "models")
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
