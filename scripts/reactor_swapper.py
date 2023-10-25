@@ -11,7 +11,7 @@ from PIL import Image
 import insightface
 
 from scripts.reactor_logger import logger
-from reactor_utils import move_path
+from reactor_utils import move_path, get_image_md5hash
 import folder_paths
 
 import warnings
@@ -42,6 +42,11 @@ FS_MODEL = None
 CURRENT_FS_MODEL_PATH = None
 
 ANALYSIS_MODEL = None
+
+SOURCE_FACES = None
+SOURCE_IMAGE_HASH = None
+TARGET_FACES = None
+TARGET_IMAGE_HASH = None
 
 
 def getAnalysisModel():
@@ -75,15 +80,15 @@ def get_face_gender(
     ]
     gender.reverse()
     face_gender = gender[face_index]
-    logger.info("%s Face %s: Detected Gender -%s-", operated, face_index, face_gender)
+    logger.status("%s Face %s: Detected Gender -%s-", operated, face_index, face_gender)
     if (gender_condition == 1 and face_gender == "F") or (gender_condition == 2 and face_gender == "M"):
-        logger.info("OK - Detected Gender matches Condition")
+        logger.status("OK - Detected Gender matches Condition")
         try:
             return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
         except IndexError:
             return None, 0
     else:
-        logger.info("WRONG - Detected Gender doesn't match Condition")
+        logger.status("WRONG - Detected Gender doesn't match Condition")
         return sorted(face, key=lambda x: x.bbox[0])[face_index], 1
 
 
@@ -92,7 +97,7 @@ def get_face_gender(
 #     return get_face_single(img_data, face_index=face_index, det_size=det_size_half)
 
 def half_det_size(det_size):
-    logger.info("Trying to halve 'det_size' parameter")
+    logger.status("Trying to halve 'det_size' parameter")
     return (det_size[0] // 2, det_size[1] // 2)
 
 def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
@@ -138,6 +143,7 @@ def swap_face(
     gender_source: int = 0,
     gender_target: int = 0,
 ):
+    global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
     result_image = target_img
 
     if model is not None:
@@ -158,18 +164,58 @@ def swap_face(
         source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
 
-        logger.info("Analyzing Source Image...")
-        source_faces = analyze_faces(source_img)
+        # logger.info("Analyzing Source Image...")
+        # source_faces = analyze_faces(source_img)
+        source_image_md5hash = get_image_md5hash(source_img)
+
+        if SOURCE_IMAGE_HASH is None:
+            SOURCE_IMAGE_HASH = source_image_md5hash
+            source_image_same = False
+        else:
+            source_image_same = True if SOURCE_IMAGE_HASH == source_image_md5hash else False
+            if not source_image_same:
+                SOURCE_IMAGE_HASH = source_image_md5hash
+
+        logger.info("Source Image MD5 Hash = %s", SOURCE_IMAGE_HASH)
+        logger.info("Source Image the Same? %s", source_image_same)
+
+        if SOURCE_FACES is None or not source_image_same:
+            logger.status("Analyzing Source Image...")
+            source_faces = analyze_faces(source_img)
+            SOURCE_FACES = source_faces
+        elif source_image_same:
+            logger.status("Using Ready Source Face(s) Model...")
+            source_faces = SOURCE_FACES
 
         if source_faces is not None:
 
-            logger.info("Analyzing Target Image...")
-            target_faces = analyze_faces(target_img)
+            # logger.info("Analyzing Target Image...")
+            # target_faces = analyze_faces(target_img)
+            target_image_md5hash = get_image_md5hash(target_img)
+
+            if TARGET_IMAGE_HASH is None:
+                TARGET_IMAGE_HASH = target_image_md5hash
+                target_image_same = False
+            else:
+                target_image_same = True if TARGET_IMAGE_HASH == target_image_md5hash else False
+                if not target_image_same:
+                    TARGET_IMAGE_HASH = target_image_md5hash
+
+            logger.info("Target Image MD5 Hash = %s", TARGET_IMAGE_HASH)
+            logger.info("Target Image the Same? %s", target_image_same)
+            
+            if TARGET_FACES is None or not target_image_same:
+                logger.status("Analyzing Target Image...")
+                target_faces = analyze_faces(target_img)
+                TARGET_FACES = target_faces
+            elif target_image_same:
+                logger.status("Using Ready Target Face(s) Model...")
+                target_faces = TARGET_FACES
 
             source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
 
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
-                logger.info(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
+                logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
             elif source_face is not None:
                 result = target_img
                 model_path = model_path = os.path.join(insightface_path, model)
@@ -192,19 +238,19 @@ def swap_face(
                                 result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
                                 return result_image
                         else:
-                            logger.info(f"No target face found for {face_num}")
+                            logger.status(f"No target face found for {face_num}")
                     elif wrong_gender == 1:
                         wrong_gender = 0
                         if source_face_idx == len(source_faces_index):
                             result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
                             return result_image
                     else:
-                        logger.info(f"No source face found for face number {source_face_idx}.")
+                        logger.status(f"No source face found for face number {source_face_idx}.")
 
                 result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
 
             else:
-                logger.info("No source face(s) in the provided Index")
+                logger.status("No source face(s) in the provided Index")
         else:
-            logger.info("No source face(s) found")
+            logger.status("No source face(s) found")
     return result_image

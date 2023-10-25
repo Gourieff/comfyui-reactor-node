@@ -3,6 +3,8 @@ from PIL import Image
 import numpy as np
 import torch
 import cv2
+import logging
+import hashlib
 
 
 def tensor_to_pil(img_tensor, batch_index=0):
@@ -101,3 +103,23 @@ def move_path(old_path, new_path):
         except Exception as e:
             print(f"Error: {e}")
             new_path = old_path
+
+def addLoggingLevel(levelName, levelNum, methodName=None):
+    if not methodName:
+        methodName = levelName.lower()
+
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(levelNum):
+            self._log(levelNum, message, args, **kwargs)
+
+    def logToRoot(message, *args, **kwargs):
+        logging.log(levelNum, message, *args, **kwargs)
+
+    logging.addLevelName(levelNum, levelName)
+    setattr(logging, levelName, levelNum)
+    setattr(logging.getLoggerClass(), methodName, logForLevel)
+    setattr(logging, methodName, logToRoot)
+
+def get_image_md5hash(image: Image.Image):
+    md5hash = hashlib.md5(image.tobytes())
+    return md5hash.hexdigest()

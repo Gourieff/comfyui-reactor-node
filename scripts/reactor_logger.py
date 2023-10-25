@@ -3,6 +3,7 @@ import copy
 import sys
 
 from modules import shared
+from reactor_utils import addLoggingLevel
 
 
 class ColoredFormatter(logging.Formatter):
@@ -28,8 +29,9 @@ class ColoredFormatter(logging.Formatter):
 logger = logging.getLogger("ReActor Node")
 logger.propagate = False
 
-# Custom Level name
-logging.addLevelName(logging.INFO, "STATUS")
+# Add Custom Level
+# logging.addLevelName(logging.INFO, "STATUS")
+addLoggingLevel("STATUS", logging.INFO + 5)
 
 # Add handler if we don't have one.
 if not logger.handlers:

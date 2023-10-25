@@ -85,11 +85,11 @@ class FaceSwapScript(scripts.Script):
 
             if self.source is not None:
                 if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
-                    logger.info(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
+                    logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
 
                     for i in range(len(p.init_images)):
                         if len(p.init_images) > 1:
-                            logger.info(f"Swap in %s", i)
+                            logger.status(f"Swap in %s", i)
                         result = swap_face(
                             self.source,
                             p.init_images[i],
@@ -110,7 +110,7 @@ class FaceSwapScript(scripts.Script):
     def postprocess_image(self, p, script_pp: scripts.PostprocessImageArgs, *args):
         if self.enable and self.swap_in_generated:
             if self.source is not None:
-                logger.info(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
+                logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
                 image: Image.Image = script_pp.image
                 result = swap_face(
                     self.source,
