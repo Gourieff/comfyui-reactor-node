@@ -164,8 +164,6 @@ def swap_face(
         source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
 
-        # logger.info("Analyzing Source Image...")
-        # source_faces = analyze_faces(source_img)
         source_image_md5hash = get_image_md5hash(source_img)
 
         if SOURCE_IMAGE_HASH is None:
@@ -189,8 +187,6 @@ def swap_face(
 
         if source_faces is not None:
 
-            # logger.info("Analyzing Target Image...")
-            # target_faces = analyze_faces(target_img)
             target_image_md5hash = get_image_md5hash(target_img)
 
             if TARGET_IMAGE_HASH is None:
