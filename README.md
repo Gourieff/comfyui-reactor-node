@@ -193,6 +193,61 @@ By using this extension you are agree not to create any content that:
 - spreads misinformation;
 - targets vulnerable groups of people.
 
+This software utilizes the pre-trained models `buffalo_l` and `inswapper_128.onnx`, which are provided by [InsightFace](https://github.com/deepinsight/insightface/). These models are included under the following conditions:
+
+[From insighface licence](https://github.com/deepinsight/insightface/tree/master/python-package): The InsightFace’s pre-trained models are available for non-commercial research purposes only. This includes both auto-downloading models and manually downloaded models.
+
+Users of this software must strictly adhere to these conditions of use. The developers and maintainers of this software are not responsible for any misuse of InsightFace’s pre-trained models.
+
+Please note that if you intend to use this software for any commercial purposes, you will need to train your own models or find models that can be used commercially.
+
+### Models Hashsum
+
+#### Safe-to-use models have the folowing hash:
+
+inswapper_128.onnx
+```
+MD5:a3a155b90354160350efd66fed6b3d80
+SHA256:e4a3f08c753cb72d04e10aa0f7dbe3deebbf39567d4ead6dce08e98aa49e16af
+```
+
+1k3d68.onnx
+
+```
+MD5:6fb94fcdb0055e3638bf9158e6a108f4
+SHA256:df5c06b8a0c12e422b2ed8947b8869faa4105387f199c477af038aa01f9a45cc
+```
+
+2d106det.onnx
+
+```
+MD5:a3613ef9eb3662b4ef88eb90db1fcf26
+SHA256:f001b856447c413801ef5c42091ed0cd516fcd21f2d6b79635b1e733a7109dbf
+```
+
+det_10g.onnx
+
+```
+MD5:4c10eef5c9e168357a16fdd580fa8371
+SHA256:5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91
+```
+
+genderage.onnx
+
+```
+MD5:81c77ba87ab38163b0dec6b26f8e2af2
+SHA256:4fde69b1c810857b88c64a335084f1c3fe8f01246c9a191b48c7bb756d6652fb
+```
+
+w600k_r50.onnx
+
+```
+MD5:80248d427976241cbd1343889ed132b3
+SHA256:4c06341c33c2ca1f86781dab0e829f88ad5b64be9fba56e56bc9ebdefc619e43
+```
+
+**Please check hashsums if you download these models from unverified (or untrusted) sources**
+
 <a name="note">
 
 ### Note!
