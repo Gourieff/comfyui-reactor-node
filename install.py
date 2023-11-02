@@ -1,6 +1,12 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import subprocess
 import os, sys, shutil
-import pkg_resources
+try:
+    from pkg_resources import get_distribution as distributions
+except:
+    from importlib_metadata import distributions
 from tqdm import tqdm
 import urllib.request
 from packaging import version as pv
@@ -22,24 +28,27 @@ models_dir_old = os.path.abspath("models/insightface")
 model_path_old = os.path.join(models_dir_old, model_name)
 
 def run_pip(*args):
-    subprocess.run([sys.executable, "-m", "pip", "install", *args])
+    subprocess.run([sys.executable, "-m", "pip", "install", "--no-warn-script-location", *args])
 
 def is_installed (
-        package: str, version: str | None = None, strict: bool = True
+        package: str, version: str = None, strict: bool = True
 ):
     has_package = None
     try:
-        has_package = pkg_resources.get_distribution(package)
+        has_package = distributions(package)
         if has_package is not None:
-            installed_version = has_package.version
-            if (installed_version != version and strict == True) or (pv.parse(installed_version) < pv.parse(version) and strict == False):
-                return False
+            if version is not None:
+                installed_version = has_package.version
+                if (installed_version != version and strict == True) or (pv.parse(installed_version) < pv.parse(version) and strict == False):
+                    return False
+                else:
+                    return True
             else:
                 return True
         else:
             return False
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Status: {e}")
         return False
     
 def download(url, path):
@@ -57,7 +66,6 @@ if os.path.exists(models_dir_old):
 if not os.path.exists(model_path):
     download(model_url, model_path)
 
-print("Installing...")
 with open(req_file) as file:
     strict = True
     for package in file:
