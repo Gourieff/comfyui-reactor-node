@@ -1,5 +1,5 @@
 app_title = "ReActor Node for ComfyUI"
-version_flag = "v0.3.1-b1"
+version_flag = "v0.3.1-b2"
 
 from scripts.reactor_logger import logger
 
