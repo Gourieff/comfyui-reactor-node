@@ -16,7 +16,7 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 elif torch.backends.mps.is_available():
     device = torch.device('mps')
-elif torch.dml.is_available():
+elif torch.hasattr('dml'):
     device = torch.device('dml')
 else:
     device = torch.device('cpu')
