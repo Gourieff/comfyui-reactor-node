@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 import insightface
+import torch.cuda as cuda
 
 from scripts.reactor_logger import logger
 from reactor_utils import move_path, get_image_md5hash
@@ -19,7 +20,10 @@ import warnings
 np.warnings = warnings
 np.warnings.filterwarnings('ignore')
 
-providers = ["CPUExecutionProvider"]
+if cuda.is_available():
+    providers = ["CUDAExecutionProvider"]
+else:
+    providers = ["CPUExecutionProvider"]
 
 models_path_old = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 insightface_path_old = os.path.join(models_path_old, "insightface")
@@ -92,10 +96,6 @@ def get_face_gender(
         return sorted(face, key=lambda x: x.bbox[0])[face_index], 1
 
 
-# def reget_face_single(img_data, det_size, face_index):
-#     det_size_half = (det_size[0] // 2, det_size[1] // 2)
-#     return get_face_single(img_data, face_index=face_index, det_size=det_size_half)
-
 def half_det_size(det_size):
     logger.status("Trying to halve 'det_size' parameter")
     return (det_size[0] // 2, det_size[1] // 2)
@@ -113,7 +113,6 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
 
     if gender_source != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
-            # return reget_face_single(img_data, det_size, face_index)
             det_size_half = half_det_size(det_size)
             return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
         return get_face_gender(face,face_index,gender_source,"Source")
