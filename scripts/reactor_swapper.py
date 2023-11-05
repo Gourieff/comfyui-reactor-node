@@ -9,7 +9,10 @@ import numpy as np
 from PIL import Image
 
 import insightface
-import torch.cuda as cuda
+try:
+    import torch.cuda as cuda
+except:
+    cuda = None
 
 from scripts.reactor_logger import logger
 from reactor_utils import move_path, get_image_md5hash
@@ -20,8 +23,11 @@ import warnings
 np.warnings = warnings
 np.warnings.filterwarnings('ignore')
 
-if cuda.is_available():
-    providers = ["CUDAExecutionProvider"]
+if cuda is not None:
+    if cuda.is_available():
+        providers = ["CUDAExecutionProvider"]
+    else:
+        providers = ["CPUExecutionProvider"]
 else:
     providers = ["CPUExecutionProvider"]
 
