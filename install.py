@@ -67,6 +67,17 @@ if not os.path.exists(model_path):
     download(model_url, model_path)
 
 with open(req_file) as file:
+    try:
+        ort = "onnxruntime-gpu"
+        import torch
+        if torch.backends.mps.is_available() or hasattr(torch,'dml'):
+            ort = "onnxruntime"
+        if not is_installed(ort,"1.16.1",False):
+            run_pip(ort)
+    except Exception as e:
+        print(e)
+        print(f"Warning: Failed to install {ort}, ReActor will not work.")
+        raise e
     strict = True
     for package in file:
         package_version = None

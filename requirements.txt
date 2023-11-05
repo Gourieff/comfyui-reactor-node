@@ -1,6 +1,5 @@
 insightface==0.7.3
 onnx>=1.14.0
-onnxruntime-gpu>=1.16.1
 opencv-python>=4.7.0.72
 numpy
 torch
