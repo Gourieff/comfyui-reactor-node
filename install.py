@@ -73,7 +73,7 @@ with open(req_file) as file:
         if torch.backends.mps.is_available() or hasattr(torch,'dml'):
             ort = "onnxruntime"
         if not is_installed(ort,"1.16.1",False):
-            run_pip(ort)
+            run_pip(ort, "-U")
     except Exception as e:
         print(e)
         print(f"Warning: Failed to install {ort}, ReActor will not work.")
