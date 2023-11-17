@@ -1,8 +1,9 @@
 import os, glob, sys
 import shutil
 from modules.processing import StableDiffusionProcessingImg2Img
-from scripts.reactor_faceswap import FaceSwapScript, get_models
-from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img, move_path
+from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model
+from scripts.reactor_logger import logger
+from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img, move_path, save_face_model, load_face_model
 from reactor_log_patch import apply_logging_patch
 
 import model_management
@@ -18,6 +19,18 @@ from comfy_extras.chainner_models import model_loading
 import folder_paths
 
 models_dir = folder_paths.models_dir
+REACTOR_MODELS_PATH = os.path.join(models_dir, "reactor")
+FACE_MODELS_PATH = os.path.join(REACTOR_MODELS_PATH, "faces")
+if not os.path.exists(REACTOR_MODELS_PATH):
+    os.makedirs(REACTOR_MODELS_PATH)
+    if not os.path.exists(FACE_MODELS_PATH):
+        os.makedirs(FACE_MODELS_PATH)
+
+def get_facemodels():
+    models_path = os.path.join(FACE_MODELS_PATH, "*")
+    models = glob.glob(models_path)
+    models = [x for x in models if x.endswith(".safetensors")]
+    return models
 
 def get_restorers():
     # basedir = os.path.abspath(os.path.dirname(__file__))
@@ -28,8 +41,8 @@ def get_restorers():
     models = [x for x in models if x.endswith(".pth")]
     return models
 
-def restorer_names():
-    models = get_restorers()
+def get_model_names(get_models):
+    models = get_models()
     names = ["none"]
     for x in models:
         names.append(os.path.basename(x))
@@ -57,36 +70,49 @@ class reactor:
         return {
             "required": {
                 "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
-                "source_image": ("IMAGE",),
                 "input_image": ("IMAGE",),               
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
-                "face_restore_model": (restorer_names(),),
+                "face_restore_model": (get_model_names(get_restorers),),
                 # "coderformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.1}), # list(np.arange(0,1,0.1)
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "detect_gender_input": (["no","female","male"], {"default": "no"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
                 "input_faces_index": ("STRING", {"default": "0"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
+            },
+            "optional": {
+                "source_image": ("IMAGE",),
+                "face_model": ("FACE_MODEL",),
             }
         }
 
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE","FACE_MODEL")
     FUNCTION = "execute"
-    CATEGORY = "image/postprocessing"
+    CATEGORY = "ReActor"
 
     def __init__(self):
         self.face_helper = None
 
-    def execute(self, enabled, source_image, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
         if not enabled:
-            return (input_image,)
+            return (input_image,face_model)
+        elif source_image is None and face_model is None:
+            logger.error("Please provide 'source_image' or `face_model`")
+            # print("ReActor Node: Please provide 'source_image' or `face_model`")
+            return (input_image,face_model)
 
+        if face_model == "none":
+            face_model = None
+        
         script = FaceSwapScript()
         pil_images = batch_tensor_to_pil(input_image)
-        source = tensor_to_pil(source_image)
+        if source_image is not None:
+            source = tensor_to_pil(source_image)
+        else:
+            source = None
         p = StableDiffusionProcessingImg2Img(pil_images)
         script.process(
             p=p,
@@ -99,12 +125,21 @@ class reactor:
             swap_in_generated=True,
             gender_source=detect_gender_source,
             gender_target=detect_gender_input,
+            face_model=face_model,
         )
         result = batched_pil_to_tensor(p.init_images)
+
+        if face_model is None:
+            face_model_to_provide = get_current_faces_model()[0]
+        else:
+            face_model_to_provide = face_model
 
         # face restoration
 
         if face_restore_model != "none":
+
+            logger.status(f"Restoring with {face_restore_model}")
+            # print(f"Restoring with {face_restore_model}")
 
             # model_path = os.path.join(os.path.dirname(__file__), "models", "facerestore_models", face_restore_model)
             model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
@@ -127,7 +162,7 @@ class reactor:
                 original_resolution = cur_image_np.shape[0:2]
 
                 if facerestore_model is None or self.face_helper is None:
-                    return (result,)
+                    return (result,face_model_to_provide)
 
                 self.face_helper.clean_all()
                 self.face_helper.read_image(cur_image_np)
@@ -168,16 +203,70 @@ class reactor:
             restored_img_np = np.array(out_images).astype(np.float32) / 255.0
             restored_img_tensor = torch.from_numpy(restored_img_np)
 
-            return (restored_img_tensor,)
+            return (restored_img_tensor,face_model_to_provide)
         
         else:
-            return (result,)
+            return (result,face_model_to_provide)
+
+class LoadFaceModel:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "face_model": (get_model_names(get_facemodels),),
+            }
+        }
+    
+    RETURN_TYPES = ("FACE_MODEL",)
+    FUNCTION = "load_model"
+    CATEGORY = "ReActor"
+
+    def load_model(self, face_model):
+        self.face_model = face_model
+        self.face_models_path = FACE_MODELS_PATH
+        if self.face_model != "none":
+            face_model_path = os.path.join(self.face_models_path, self.face_model)
+            out = load_face_model(face_model_path)
+        else:
+            out = None
+        return (out, )
+
+class SaveFaceModel:
+    def __init__(self):
+        self.output_dir = FACE_MODELS_PATH
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "face_model": ("FACE_MODEL",),
+                "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
+                "face_model_name": ("STRING", {"default": "default"}),
+            }
+        }
+
+    RETURN_TYPES = ()
+    FUNCTION = "save_model"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "ReActor"
+
+    def save_model(self, face_model, save_mode, face_model_name):
+        if face_model != "none" and save_mode:
+            face_model_path = os.path.join(self.output_dir, face_model_name + ".safetensors")
+            save_face_model(face_model,face_model_path)
+        return face_model_name
 
 
 NODE_CLASS_MAPPINGS = {
     "ReActorFaceSwap": reactor,
+    "ReActorLoadFaceModel": LoadFaceModel,
+    "ReActorSaveFaceModel": SaveFaceModel,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorFaceSwap": "ReActor - Fast Face Swap",
+    "ReActorLoadFaceModel": "Load Face Model",
+    "ReActorSaveFaceModel": "Save Face Model",
 }

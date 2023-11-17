@@ -2,8 +2,16 @@
 
   <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/ReActor_logo_red.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/версия_нода-0.3.1-brightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/версия_нода-0.4.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
   
+  <sup>
+  <font color=brightred>
+
+  ## !!! [Важные изменения](#latestupdate) !!!<br>Не забудьте добавить Нод заново в существующие воркфлоу
+  
+  </font>
+  </sup>
+
   <a href='https://ko-fi.com/gourieff' target='_blank'><img height='33' src='https://storage.ko-fi.com/cdn/kofi3.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
   <hr>
@@ -27,7 +35,7 @@
 <div align="center">
 
 ---
-[**Установка**](#installation) | [**Использование**](#usage) | [**Устранение проблем**](#troubleshooting) | [**Обновление**](#updating) | [**Ответственность**](#disclaimer)
+[**Что нового**](#latestupdate) | [**Установка**](#installation) | [**Использование**](#usage) | [**Устранение проблем**](#troubleshooting) | [**Обновление**](#updating) | [**Ответственность**](#disclaimer)
 
 ---
 
@@ -63,6 +71,22 @@
   <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/demo.gif?raw=true" alt="logo" width="100%"/>
 </div>
 
+<a name="latestupdate">
+
+## Что нового в последнем обновлении
+
+### 0.4.0 <sub><sup>BETA1</sup></sub>
+
+- Вход "input_image" теперь идёт первым, это даёт возможность корректного байпаса, а также это правильно с точки зрения расположения входов (главный вход - первый);
+- Теперь можно сохранять модели лиц в качестве файлов "safetensors" и загружать их в ReActor, реализуя разные сценарии использования, а также  храня супер легкие модели лиц, которые вы чаще всего используете:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-01.jpg?raw=true" alt="0.4.0-whatsnew-01" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-02.jpg?raw=true" alt="0.4.0-whatsnew-02" width="100%"/>
+
+- Различные исправления, делающие это расширение лучше.
+
+Спасибо всем, кто находит ошибки, предлагает новые функции и поддерживает данный проект!
+
 <a name="installation">
 
 ## Установка
@@ -88,7 +112,7 @@
 11. Запустите SD WebUI и проверьте консоль на сообщение, что ReActor Node работает:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
-12.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `image/postprocessing` или через поиск:
+12.   Перейдите во вкладку ComfyUI и найдите там ReActor Node внутри меню `ReActor` или через поиск:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
@@ -107,7 +131,7 @@
 5. (Начиная с версии 0.3.0) Скачайте модели восстановления лиц (по ссылкам ниже) и сохраните их в папку `ComfyUI\models\facerestore_models`:
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
-6. Запустите ComfyUI и найдите ReActor Node внутри меню `image/postprocessing` или через поиск
+6. Запустите ComfyUI и найдите ReActor Node внутри меню `ReActor` или через поиск
 
 </details>
 

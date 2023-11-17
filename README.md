@@ -2,7 +2,15 @@
 
   <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/ReActor_logo_red.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.3.1-brightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
+
+  <sup>
+  <font color=brightred>
+
+  ## !!! [Important Update](#latestupdate) !!!<br>Don't forget to add the Node again in existing workflows
+  
+  </font>
+  </sup>
   
   <a href='https://ko-fi.com/gourieff' target='_blank'><img height='33' src='https://storage.ko-fi.com/cdn/kofi3.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -27,7 +35,7 @@
 <div align="center">
 
 ---
-[**Installation**](#installation) | [**Usage**](#usage) | [**Troubleshooting**](#troubleshooting) | [**Updating**](#updating) | [**Disclaimer**](#disclaimer) | [**Note!**](#note)
+[**What's new**](#latestupdate) | [**Installation**](#installation) | [**Usage**](#usage) | [**Troubleshooting**](#troubleshooting) | [**Updating**](#updating) | [**Disclaimer**](#disclaimer) | [**Note!**](#note)
 
 ---
 
@@ -63,6 +71,22 @@
   <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/demo.gif?raw=true" alt="demo" width="100%"/>
 </div>
 
+<a name="latestupdate">
+
+## What's new in the latest update
+
+### 0.4.0 <sub><sup>BETA1</sup></sub>
+
+- Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
+- You can now save face models as "safetensors" files and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-01.jpg?raw=true" alt="0.4.0-whatsnew-01" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-02.jpg?raw=true" alt="0.4.0-whatsnew-02" width="100%"/>
+
+- Different fixes making this extension better.
+
+Thanks to everyone who finds bugs, suggests new features and supports this project!
+
 ## Installation
 
 <details>
@@ -86,7 +110,7 @@
 11. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
-1.  Go to the ComfyUI tab and find there ReActor Node inside the menu `image/postprocessing` or by using a search:
+1.  Go to the ComfyUI tab and find there ReActor Node inside the menu `ReActor` or by using a search:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
@@ -105,7 +129,7 @@
 5. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `ComfyUI\models\facerestore_models` directory:
    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
-6. Run ComfyUI and find there ReActor Node inside the menu `image/postprocessing` or by using a search
+6. Run ComfyUI and find there ReActor Node inside the menu `ReActor` or by using a search
 
 </details>
 

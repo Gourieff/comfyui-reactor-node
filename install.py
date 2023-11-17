@@ -24,8 +24,9 @@ model_url = "https://github.com/facefusion/facefusion-assets/releases/download/m
 model_name = os.path.basename(model_url)
 models_dir_path = os.path.join(models_dir, "insightface")
 model_path = os.path.join(models_dir_path, model_name)
-models_dir_old = os.path.abspath("models/insightface")
-model_path_old = os.path.join(models_dir_old, model_name)
+# DEPRECATED:
+# models_dir_old = os.path.abspath("models/insightface")
+# model_path_old = os.path.join(models_dir_old, model_name)
 
 def run_pip(*args):
     subprocess.run([sys.executable, "-m", "pip", "install", "--no-warn-script-location", *args])
@@ -60,8 +61,9 @@ def download(url, path):
 if not os.path.exists(models_dir_path):
     os.makedirs(models_dir_path)
 
-if os.path.exists(models_dir_old):
-    shutil.move(model_path_old, model_path)
+# DEPRECATED:
+# if os.path.exists(models_dir_old):
+#     shutil.move(model_path_old, model_path)
 
 if not os.path.exists(model_path):
     download(model_url, model_path)

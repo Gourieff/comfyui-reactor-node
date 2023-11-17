@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 import insightface
+from insightface.app.common import Face
 try:
     import torch.cuda as cuda
 except:
@@ -58,6 +59,9 @@ SOURCE_IMAGE_HASH = None
 TARGET_FACES = None
 TARGET_IMAGE_HASH = None
 
+def get_current_faces_model():
+    global SOURCE_FACES
+    return SOURCE_FACES
 
 def getAnalysisModel():
     global ANALYSIS_MODEL
@@ -140,13 +144,14 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
 
 
 def swap_face(
-    source_img: Image.Image,
+    source_img: Union[Image.Image, None],
     target_img: Image.Image,
     model: Union[str, None] = None,
     source_faces_index: List[int] = [0],
     faces_index: List[int] = [0],
     gender_source: int = 0,
     gender_target: int = 0,
+    face_model: Union[Face, None] = None,
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
     result_image = target_img
@@ -166,29 +171,41 @@ def swap_face(
             
             source_img = Image.open(io.BytesIO(img_bytes))
             
-        source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
 
-        source_image_md5hash = get_image_md5hash(source_img)
+        if source_img is not None:
 
-        if SOURCE_IMAGE_HASH is None:
-            SOURCE_IMAGE_HASH = source_image_md5hash
-            source_image_same = False
-        else:
-            source_image_same = True if SOURCE_IMAGE_HASH == source_image_md5hash else False
-            if not source_image_same:
+            source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
+
+            source_image_md5hash = get_image_md5hash(source_img)
+
+            if SOURCE_IMAGE_HASH is None:
                 SOURCE_IMAGE_HASH = source_image_md5hash
+                source_image_same = False
+            else:
+                source_image_same = True if SOURCE_IMAGE_HASH == source_image_md5hash else False
+                if not source_image_same:
+                    SOURCE_IMAGE_HASH = source_image_md5hash
 
-        logger.info("Source Image MD5 Hash = %s", SOURCE_IMAGE_HASH)
-        logger.info("Source Image the Same? %s", source_image_same)
+            logger.info("Source Image MD5 Hash = %s", SOURCE_IMAGE_HASH)
+            logger.info("Source Image the Same? %s", source_image_same)
 
-        if SOURCE_FACES is None or not source_image_same:
-            logger.status("Analyzing Source Image...")
-            source_faces = analyze_faces(source_img)
-            SOURCE_FACES = source_faces
-        elif source_image_same:
-            logger.status("Using Ready Source Face(s) Model...")
-            source_faces = SOURCE_FACES
+            if SOURCE_FACES is None or not source_image_same:
+                logger.status("Analyzing Source Image...")
+                source_faces = analyze_faces(source_img)
+                SOURCE_FACES = source_faces
+            elif source_image_same:
+                logger.status("Using Hashed Source Face(s) Model...")
+                source_faces = SOURCE_FACES
+
+        elif face_model is not None:
+
+            logger.status("Using Loaded Source Face Model...")
+            source_face_model = [face_model]
+            source_faces = source_face_model
+
+        else:
+            logger.error("Cannot detect any Source")
 
         if source_faces is not None:
 
@@ -210,10 +227,14 @@ def swap_face(
                 target_faces = analyze_faces(target_img)
                 TARGET_FACES = target_faces
             elif target_image_same:
-                logger.status("Using Ready Target Face(s) Model...")
+                logger.status("Using Hashed Target Face(s) Model...")
                 target_faces = TARGET_FACES
 
-            source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+            if source_img is not None:
+                source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+            else:
+                source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                wrong_gender = 0
 
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
@@ -232,6 +253,7 @@ def swap_face(
                     if source_face is not None and wrong_gender == 0:
                         target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target)
                         if target_face is not None and wrong_gender == 0:
+                            logger.status(f"Swapping...")
                             result = face_swapper.get(result, target_face, source_face)
                         elif wrong_gender == 1:
                             wrong_gender = 0

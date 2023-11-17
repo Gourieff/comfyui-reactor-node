@@ -10,25 +10,26 @@ from modules.processing import (
     StableDiffusionProcessingImg2Img,
 )
 from scripts.reactor_logger import logger
-from scripts.reactor_swapper import swap_face
+from scripts.reactor_swapper import swap_face, get_current_faces_model
 import folder_paths
 
 
 def get_models():
-    models_path_old = os.path.join(scripts.basedir(),"models","roop")
-    if os.path.exists(models_path_old):
-        models_path = os.path.join(folder_paths.models_dir,"insightface")
-        try:
-            models = os.listdir(models_path_old)
-            for model in models:
-                old_path = os.path.join(models_path_old, model)
-                new_path = os.path.join(models_path, model)
-                os.rename(old_path, new_path)
-        except Exception as e:
-            print(f"Error: {e}")
-            models_path = models_path_old
-        finally:
-            os.rmdir(models_path_old)
+    # DEPRECATED:
+    # models_path_old = os.path.join(scripts.basedir(),"models","roop")
+    # if os.path.exists(models_path_old):
+    #     models_path = os.path.join(folder_paths.models_dir,"insightface")
+    #     try:
+    #         models = os.listdir(models_path_old)
+    #         for model in models:
+    #             old_path = os.path.join(models_path_old, model)
+    #             new_path = os.path.join(models_path, model)
+    #             os.rename(old_path, new_path)
+    #     except Exception as e:
+    #         print(f"Error: {e}")
+    #         models_path = models_path_old
+    #     finally:
+    #         os.rmdir(models_path_old)
     models_path = os.path.join(folder_paths.models_dir,"insightface/*")
     models = glob.glob(models_path)
     models = [x for x in models if x.endswith(".onnx") or x.endswith(".pth")]
@@ -49,6 +50,7 @@ class FaceSwapScript(scripts.Script):
         swap_in_generated,
         gender_source,
         gender_target,
+        face_model,
     ):
         self.enable = enable
         if self.enable:
@@ -58,6 +60,7 @@ class FaceSwapScript(scripts.Script):
             self.gender_source = gender_source
             self.gender_target = gender_target
             self.model = model
+            self.face_model = face_model
             self.source_faces_index = [
                 int(x) for x in source_faces_index.strip(",").split(",") if x.isnumeric()
             ]
@@ -83,25 +86,27 @@ class FaceSwapScript(scripts.Script):
             elif self.gender_target  == "male":
                 self.gender_target = 2
 
-            if self.source is not None:
-                if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
-                    logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
+            # if self.source is not None:
+            if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
+                logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
 
-                    for i in range(len(p.init_images)):
-                        if len(p.init_images) > 1:
-                            logger.status(f"Swap in %s", i)
-                        result = swap_face(
-                            self.source,
-                            p.init_images[i],
-                            source_faces_index=self.source_faces_index,
-                            faces_index=self.faces_index,
-                            model=self.model,
-                            gender_source=self.gender_source,
-                            gender_target=self.gender_target,
-                        )
-                        p.init_images[i] = result
-            else:
-                logger.error(f"Please provide a source face")
+                for i in range(len(p.init_images)):
+                    if len(p.init_images) > 1:
+                        logger.status(f"Swap in %s", i)
+                    result = swap_face(
+                        self.source,
+                        p.init_images[i],
+                        source_faces_index=self.source_faces_index,
+                        faces_index=self.faces_index,
+                        model=self.model,
+                        gender_source=self.gender_source,
+                        gender_target=self.gender_target,
+                        face_model=self.face_model,
+                    )
+                    p.init_images[i] = result
+                logger.status("--Done!--")
+            # else:
+            #     logger.error(f"Please provide a source face")
 
     def postprocess_batch(self, p, *args, **kwargs):
         if self.enable:

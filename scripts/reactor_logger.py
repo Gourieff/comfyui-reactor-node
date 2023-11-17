@@ -26,7 +26,7 @@ class ColoredFormatter(logging.Formatter):
 
 
 # Create a new logger
-logger = logging.getLogger("ReActor Node")
+logger = logging.getLogger("ReActor")
 logger.propagate = False
 
 # Add Custom Level
@@ -37,7 +37,7 @@ addLoggingLevel("STATUS", logging.INFO + 5)
 if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(
-        ColoredFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s","%H:%M:%S")
+        ColoredFormatter("[%(name)s] %(asctime)s - %(levelname)s - %(message)s",datefmt="%H:%M:%S")
     )
     logger.addHandler(handler)
 
