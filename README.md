@@ -78,7 +78,7 @@
 ### 0.4.0 <sub><sup>BETA1</sup></sub>
 
 - Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
-- You can now save face models as "safetensors" files and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use:
+- You can now save face models as "safetensors" files (`ComfyUI\models\reactor\faces`) and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use:
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-01.jpg?raw=true" alt="0.4.0-whatsnew-01" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-02.jpg?raw=true" alt="0.4.0-whatsnew-02" width="100%"/>
