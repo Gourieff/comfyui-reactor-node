@@ -80,6 +80,8 @@ class reactor:
                 "source_faces_index": ("STRING", {"default": "0"}),
                 "input_faces_index": ("STRING", {"default": "0"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
+                "enable_threads":("BOOLEAN",{"default": True} ),
+                "n_thread":("INT", {"default": 5,"min": 1,"step":1}),
             },
             "optional": {
                 "source_image": ("IMAGE",),
@@ -94,7 +96,7 @@ class reactor:
     def __init__(self):
         self.face_helper = None
 
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection, source_image=None, face_model=None):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection,enable_threads,n_thread, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
         if not enabled:
@@ -107,6 +109,8 @@ class reactor:
         if face_model == "none":
             face_model = None
         
+      
+
         script = FaceSwapScript()
         pil_images = batch_tensor_to_pil(input_image)
         if source_image is not None:
@@ -114,19 +118,40 @@ class reactor:
         else:
             source = None
         p = StableDiffusionProcessingImg2Img(pil_images)
-        script.process(
-            p=p,
-            img=source,
-            enable=True,
-            source_faces_index=source_faces_index,
-            faces_index=input_faces_index,
-            model=swap_model,
-            swap_in_source=True,
-            swap_in_generated=True,
-            gender_source=detect_gender_source,
-            gender_target=detect_gender_input,
-            face_model=face_model,
-        )
+
+        if n_thread==1:
+            enable_threads=False
+
+        if enable_threads:
+            script.process_parallel(
+                p=p,
+                img=source,
+                enable=True,
+                source_faces_index=source_faces_index,
+                faces_index=input_faces_index,
+                model=swap_model,
+                swap_in_source=True,
+                swap_in_generated=True,
+                gender_source=detect_gender_source,
+                gender_target=detect_gender_input,
+                face_model=face_model,
+                n_thread=n_thread,
+            )
+        else:            
+            script.process(
+                p=p,
+                img=source,
+                enable=True,
+                source_faces_index=source_faces_index,
+                faces_index=input_faces_index,
+                model=swap_model,
+                swap_in_source=True,
+                swap_in_generated=True,
+                gender_source=detect_gender_source,
+                gender_target=detect_gender_input,
+                face_model=face_model,
+            )
+
         result = batched_pil_to_tensor(p.init_images)
 
         if face_model is None:
