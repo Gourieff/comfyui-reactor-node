@@ -1,7 +1,7 @@
 import os, glob, sys
 import shutil
 from modules.processing import StableDiffusionProcessingImg2Img
-from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model
+from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model, analyze_faces
 from scripts.reactor_logger import logger
 from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img, move_path, save_face_model, load_face_model
 from reactor_log_patch import apply_logging_patch
@@ -130,7 +130,8 @@ class reactor:
         result = batched_pil_to_tensor(p.init_images)
 
         if face_model is None:
-            face_model_to_provide = get_current_faces_model()[0]
+            current_face_model = get_current_faces_model()
+            face_model_to_provide = current_face_model[0] if (current_face_model is not None and len(current_face_model) > 0) else face_model
         else:
             face_model_to_provide = face_model
 
@@ -239,9 +240,12 @@ class SaveFaceModel:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "face_model": ("FACE_MODEL",),
                 "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
                 "face_model_name": ("STRING", {"default": "default"}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "face_model": ("FACE_MODEL",),
             }
         }
 
@@ -252,10 +256,19 @@ class SaveFaceModel:
 
     CATEGORY = "ReActor"
 
-    def save_model(self, face_model, save_mode, face_model_name):
-        if face_model != "none" and save_mode:
+    def save_model(self, save_mode, face_model_name, image=None, face_model=None):
+        if save_mode and image is not None:
+            source = tensor_to_pil(image)
+            source = cv2.cvtColor(np.array(source), cv2.COLOR_RGB2BGR)
+            apply_logging_patch(1)
+            logger.status("Building Face Model...")
+            face_model = analyze_faces(source)[0]
+            logger.status("--Done!--")
+        if save_mode and (face_model != "none" or face_model is not None):
             face_model_path = os.path.join(self.output_dir, face_model_name + ".safetensors")
             save_face_model(face_model,face_model_path)
+        if image is None and face_model is None:
+            logger.error("Please provide `face_model` or `image`")
         return face_model_name
 
 

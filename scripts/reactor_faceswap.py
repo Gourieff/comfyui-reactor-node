@@ -10,7 +10,7 @@ from modules.processing import (
     StableDiffusionProcessingImg2Img,
 )
 from scripts.reactor_logger import logger
-from scripts.reactor_swapper import swap_face, get_current_faces_model
+from scripts.reactor_swapper import swap_face, get_current_faces_model, analyze_faces
 import folder_paths
 
 
