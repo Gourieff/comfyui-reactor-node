@@ -79,7 +79,7 @@
 
 - Ability to build and save face models directly from an image:
 
-<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-01" width="903px"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-03" width="50%"/>
 
 - Both the inputs are optional now, just connect one of them according to your workflow; if both is connected - `image` has a priority.
 
@@ -143,7 +143,14 @@ Thanks to everyone who finds bugs, suggests new features and supports this proje
 
 ## Usage
 
-Just connect all required nodes and run the query.
+You can find ReActor Nodes inside the menu `ReActor` or by using a search (just type "ReActor" in the search field)
+
+List of Nodes:
+- ReActorFaceSwap (Main Node)
+- ReActorLoadFaceModel (Load Face Model)
+- ReActorSaveFaceModel (Save Face Model)
+
+Connect all required slots and run the query.
 
 ### Main Node Inputs
 
