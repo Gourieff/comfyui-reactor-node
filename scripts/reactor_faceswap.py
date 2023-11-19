@@ -37,67 +37,7 @@ def get_models():
 
 
 class FaceSwapScript(scripts.Script):
-
-    def process_parallel(self, p: StableDiffusionProcessing, img, enable, source_faces_index, faces_index, model, swap_in_source, swap_in_generated, gender_source, gender_target, face_model,n_thread):
-        self.enable = enable
-        if self.enable:
-
-            self.source = img
-            self.swap_in_generated = swap_in_generated
-            self.gender_source = gender_source
-            self.gender_target = gender_target
-            self.model = model
-            self.face_model = face_model
-            self.source_faces_index = [
-                int(x) for x in source_faces_index.strip(",").split(",") if x.isnumeric()
-            ]
-            self.faces_index = [
-                int(x) for x in faces_index.strip(",").split(",") if x.isnumeric()
-            ]
-            if len(self.source_faces_index) == 0:
-                self.source_faces_index = [0]
-            if len(self.faces_index) == 0:
-                self.faces_index = [0]
-
-            if self.gender_source is None or self.gender_source == "no":
-                self.gender_source = 0
-            elif self.gender_source == "female":
-                self.gender_source = 1
-            elif self.gender_source == "male":
-                self.gender_source = 2
-
-            if self.gender_target is None or self.gender_target == "no":
-                self.gender_target = 0
-            elif self.gender_target == "female":
-                self.gender_target = 1
-            elif self.gender_target == "male":
-                self.gender_target = 2
-
-            if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
-                logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
-                max_workers = n_thread
-                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                    futures = []
-                    for i in range(len(p.init_images)):
-                        if len(p.init_images) > 1:
-                            logger.status(f"Swap in %s", i)
-                        args = (self.source, p.init_images[i], self.model, self.source_faces_index, self.faces_index,  self.gender_source, self.gender_target, self.face_model)
-                        futures.append(executor.submit(swap_face, *args))
-
-                    # Wait for all parallel tasks to complete
-                    concurrent.futures.wait(futures)
-
-                    # Retrieve the results
-                    for i, future in enumerate(futures):
-                        try:
-                            result = future.result()
-                            p.init_images[i] = result
-                        except:
-                            print("Error?")
-                            pass
-
-                logger.status("--Done!--")
-                
+           
     def process(
         self,
         p: StableDiffusionProcessing,
@@ -111,6 +51,8 @@ class FaceSwapScript(scripts.Script):
         gender_source,
         gender_target,
         face_model,
+        n_thread
+        
     ):
         self.enable = enable
         if self.enable:
@@ -149,21 +91,41 @@ class FaceSwapScript(scripts.Script):
             # if self.source is not None:
             if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
                 logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
+                if n_thread > 1:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=n_thread) as executor:
+                        futures = []
+                        for i in range(len(p.init_images)):
+                            if len(p.init_images) > 1:
+                                logger.status(f"Swap in %s", i)
+                            args = (self.source, p.init_images[i], self.model, self.source_faces_index, self.faces_index,  self.gender_source, self.gender_target, self.face_model)
+                            futures.append(executor.submit(swap_face, *args))
 
-                for i in range(len(p.init_images)):
-                    if len(p.init_images) > 1:
-                        logger.status(f"Swap in %s", i)
-                    result = swap_face(
-                        self.source,
-                        p.init_images[i],
-                        source_faces_index=self.source_faces_index,
-                        faces_index=self.faces_index,
-                        model=self.model,
-                        gender_source=self.gender_source,
-                        gender_target=self.gender_target,
-                        face_model=self.face_model,
-                    )
-                    p.init_images[i] = result
+                        # Wait for all parallel tasks to complete
+                        concurrent.futures.wait(futures)
+
+                        # Retrieve the results
+                        for i, future in enumerate(futures):
+                            try:
+                                result = future.result()
+                                p.init_images[i] = result
+                            except:
+                                pass
+
+                else:
+                    for i in range(len(p.init_images)):
+                        if len(p.init_images) > 1:
+                            logger.status(f"Swap in %s", i)
+                        result = swap_face(
+                            self.source,
+                            p.init_images[i],
+                            source_faces_index=self.source_faces_index,
+                            faces_index=self.faces_index,
+                            model=self.model,
+                            gender_source=self.gender_source,
+                            gender_target=self.gender_target,
+                            face_model=self.face_model,
+                        )
+                        p.init_images[i] = result
                 logger.status("--Done!--")
             # else:
             #     logger.error(f"Please provide a source face")
