@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/ReActor_logo_red.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.0_beta2-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -75,6 +75,14 @@
 
 ## What's new in the latest update
 
+### 0.4.0 <sub><sup>BETA2</sup></sub>
+
+- Ability to build and save face models directly from an image:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-01" width="903px"/>
+
+- Both the inputs are optional now, just connect one of them according to your workflow; if both is connected - `image` has a priority.
+
 ### 0.4.0 <sub><sup>BETA1</sup></sub>
 
 - Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
@@ -137,9 +145,25 @@ Thanks to everyone who finds bugs, suggests new features and supports this proje
 
 Just connect all required nodes and run the query.
 
+### Main Node Inputs
+
+- `input_image` - is an image to be processed (target image, analog of "target image" in the SD WebUI extension);
+  - Supported Nodes: "Load Image", "Load Video" or any other nodes providng images as an output;
+- `source_image` - is an image with a face or faces to swap in the `input_image` (source image, analog of "source image" in the SD WebUI extension);
+  - Supported Nodes: "Load Image";
+- `face_model` - is the input for the "Load Face Model" Node or another ReActor node to provide a face model file (face embedding) you created earlier via the "Save Face Model" Node;
+  - Supported Nodes: "Load Face Model";
+
+### Main Node Outputs
+
+- `IMAGE` - is an output with the resulted image;
+  - Supported Nodes: any nodes which have images as an input;
+- `FACE_MODEL` - is an output providng a source face's model being built during the swapping process;
+  - Supported Nodes: "Save Face Model", "ReActor";
+
 ### Face Restoration
 
-From the version 0.3.0 ReActor Node has a buil-in face restoration.<br>Just download the models you want (see [Installation](#installation) instruction) and select one of them to restore the resulting face(s) during the faceswap. It will enhance face details and make your result more accurate.
+Since version 0.3.0 ReActor Node has a buil-in face restoration.<br>Just download the models you want (see [Installation](#installation) instruction) and select one of them to restore the resulting face(s) during the faceswap. It will enhance face details and make your result more accurate.
 
 ### Face Indexes
 
@@ -156,6 +180,13 @@ E.g.: 0,1,2 (for Source); 1,0,2 (for Input).<br>This means: the second Input fac
 
 You can specify the gender to detect in images.<br>
 ReActor will swap a face only if it meets the given condition.
+
+### Face Models
+
+Since version 0.4.0 you can save face models as "safetensors" files (stored in `ComfyUI\models\reactor\faces`) and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use.
+
+To make new models appear in the list of the "Load Face Model" Node - just refresh the page of your ComfyUI web application.<br>
+(I recommend you to use ComfyUI Manager - otherwise you workflow can be lost after you refresh the page if you didn't save it before that).
 
 ## Troubleshooting
 
