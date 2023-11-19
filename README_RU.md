@@ -79,7 +79,7 @@
 
 - Возможность сохранять модели лиц напрямую из изображения:
 
-<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-01" width="903px"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-03" width="50%"/>
 
 - Оба входа теперь опциональны, присоедините один из них в соответствии с вашим воркфлоу; если присоеденены оба - вход `image` имеет приоритет.
 
@@ -147,7 +147,14 @@
 
 ## Использование
 
-Соедините все необходимые узлы (nodes) и запустите очередь (query).
+Вы можете найти ноды ReActor внутри меню `ReActor` или через поиск (достаточно ввести "ReActor" в поисковой строке)
+
+Список нодов:
+- ReActorFaceSwap (Основной нод)
+- ReActorLoadFaceModel (Load Face Model)
+- ReActorSaveFaceModel (Save Face Model)
+
+Соедините все необходимые слоты (slots) и запустите очередь (query).
 
 ### Входы основного Нода
 
