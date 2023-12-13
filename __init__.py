@@ -32,7 +32,7 @@ sys.path.remove(repo_dir)
 # Remove any new modules
 modules_to_remove = []
 for module in sys.modules:
-    if module not in original_modules:
+    if module not in original_modules and not module.startswith("google.protobuf"):
         modules_to_remove.append(module)
 for module in modules_to_remove:
     del sys.modules[module]
