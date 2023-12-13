@@ -200,6 +200,7 @@ def swap_face(
 
         elif face_model is not None:
 
+            source_faces_index = [0]
             logger.status("Using Loaded Source Face Model...")
             source_face_model = [face_model]
             source_faces = source_face_model
