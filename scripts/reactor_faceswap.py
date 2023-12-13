@@ -12,7 +12,7 @@ from modules.processing import (
 from scripts.reactor_logger import logger
 from scripts.reactor_swapper import swap_face, get_current_faces_model, analyze_faces
 import folder_paths
-
+import concurrent.futures
 
 def get_models():
     # DEPRECATED:
@@ -37,7 +37,7 @@ def get_models():
 
 
 class FaceSwapScript(scripts.Script):
-
+           
     def process(
         self,
         p: StableDiffusionProcessing,
@@ -51,6 +51,8 @@ class FaceSwapScript(scripts.Script):
         gender_source,
         gender_target,
         face_model,
+        n_thread
+        
     ):
         self.enable = enable
         if self.enable:
@@ -89,21 +91,41 @@ class FaceSwapScript(scripts.Script):
             # if self.source is not None:
             if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
                 logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
+                if n_thread > 1:
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=n_thread) as executor:
+                        futures = []
+                        for i in range(len(p.init_images)):
+                            if len(p.init_images) > 1:
+                                logger.status(f"Swap in %s", i)
+                            args = (self.source, p.init_images[i], self.model, self.source_faces_index, self.faces_index,  self.gender_source, self.gender_target, self.face_model)
+                            futures.append(executor.submit(swap_face, *args))
 
-                for i in range(len(p.init_images)):
-                    if len(p.init_images) > 1:
-                        logger.status(f"Swap in %s", i)
-                    result = swap_face(
-                        self.source,
-                        p.init_images[i],
-                        source_faces_index=self.source_faces_index,
-                        faces_index=self.faces_index,
-                        model=self.model,
-                        gender_source=self.gender_source,
-                        gender_target=self.gender_target,
-                        face_model=self.face_model,
-                    )
-                    p.init_images[i] = result
+                        # Wait for all parallel tasks to complete
+                        concurrent.futures.wait(futures)
+
+                        # Retrieve the results
+                        for i, future in enumerate(futures):
+                            try:
+                                result = future.result()
+                                p.init_images[i] = result
+                            except:
+                                pass
+
+                else:
+                    for i in range(len(p.init_images)):
+                        if len(p.init_images) > 1:
+                            logger.status(f"Swap in %s", i)
+                        result = swap_face(
+                            self.source,
+                            p.init_images[i],
+                            source_faces_index=self.source_faces_index,
+                            faces_index=self.faces_index,
+                            model=self.model,
+                            gender_source=self.gender_source,
+                            gender_target=self.gender_target,
+                            face_model=self.face_model,
+                        )
+                        p.init_images[i] = result
                 logger.status("--Done!--")
             # else:
             #     logger.error(f"Please provide a source face")
