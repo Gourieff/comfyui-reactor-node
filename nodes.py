@@ -75,6 +75,7 @@ class reactor:
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (get_model_names(get_restorers),),
                 # "coderformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.1}), # list(np.arange(0,1,0.1)
+                "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.0, "max": 1, "step": 0.1}),
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "detect_gender_input": (["no","female","male"], {"default": "no"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
@@ -94,7 +95,7 @@ class reactor:
     def __init__(self):
         self.face_helper = None
 
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, facedetection, source_image=None, face_model=None):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, facedetection, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
         if not enabled:
@@ -185,7 +186,7 @@ class reactor:
                     except Exception as error:
                         print(f'\tFailed inference for CodeFormer: {error}', file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
-
+                    restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
                     restored_face = restored_face.astype('uint8')
                     self.face_helper.add_restored_face(restored_face)
 
