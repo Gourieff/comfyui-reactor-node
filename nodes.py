@@ -1,30 +1,38 @@
 import os, glob, sys
-import shutil
+
+import torch
+from torchvision.transforms.functional import normalize
+import numpy as np
+import cv2
+
 from modules.processing import StableDiffusionProcessingImg2Img
+from comfy_extras.chainner_models import model_loading
+import model_management
+import comfy.utils
+import folder_paths
+
 from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model, analyze_faces
 from scripts.reactor_logger import logger
 from reactor_utils import batch_tensor_to_pil, batched_pil_to_tensor, tensor_to_pil, img2tensor, tensor2img, move_path, save_face_model, load_face_model
 from reactor_log_patch import apply_logging_patch
-
-import model_management
-import torch
-import comfy.utils
-import numpy as np
-import cv2
-# import math
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
-# from facelib.detection.retinaface import retinaface
-from torchvision.transforms.functional import normalize
-from comfy_extras.chainner_models import model_loading
-import folder_paths
+from basicsr.utils.registry import ARCH_REGISTRY
+import scripts.r_archs.codeformer_arch
+
 
 models_dir = folder_paths.models_dir
 REACTOR_MODELS_PATH = os.path.join(models_dir, "reactor")
 FACE_MODELS_PATH = os.path.join(REACTOR_MODELS_PATH, "faces")
+
 if not os.path.exists(REACTOR_MODELS_PATH):
     os.makedirs(REACTOR_MODELS_PATH)
     if not os.path.exists(FACE_MODELS_PATH):
         os.makedirs(FACE_MODELS_PATH)
+
+dir_facerestore_models = os.path.join(models_dir, "facerestore_models")
+os.makedirs(dir_facerestore_models, exist_ok=True)
+folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
+
 
 def get_facemodels():
     models_path = os.path.join(FACE_MODELS_PATH, "*")
@@ -33,9 +41,6 @@ def get_facemodels():
     return models
 
 def get_restorers():
-    # basedir = os.path.abspath(os.path.dirname(__file__))
-    # global MODELS_DIR
-    # models_path = os.path.join(basedir, "models/facerestore_models/*")
     models_path = os.path.join(models_dir, "facerestore_models/*")
     models = glob.glob(models_path)
     models = [x for x in models if x.endswith(".pth")]
@@ -52,17 +57,6 @@ def model_names():
     models = get_models()
     return {os.path.basename(x): x for x in models}
 
-models_dir_old = os.path.join(os.path.dirname(__file__), "models")
-old_dir_facerestore_models = os.path.join(models_dir_old, "facerestore_models")
-
-dir_facerestore_models = os.path.join(models_dir, "facerestore_models")
-os.makedirs(dir_facerestore_models, exist_ok=True)
-folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
-
-if os.path.exists(old_dir_facerestore_models):
-    move_path(old_dir_facerestore_models,dir_facerestore_models)
-if os.path.exists(dir_facerestore_models) and os.path.exists(old_dir_facerestore_models):
-    shutil.rmtree(old_dir_facerestore_models)
 
 class reactor:
     @classmethod
@@ -74,8 +68,8 @@ class reactor:
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (get_model_names(get_restorers),),
-                # "coderformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.1}), # list(np.arange(0,1,0.1)
-                "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.0, "max": 1, "step": 0.1}),
+                "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.1, "max": 1, "step": 0.05}),
+                "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "detect_gender_input": (["no","female","male"], {"default": "no"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
@@ -95,7 +89,7 @@ class reactor:
     def __init__(self):
         self.face_helper = None
 
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, facedetection, source_image=None, face_model=None):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
         if not enabled:
@@ -141,15 +135,31 @@ class reactor:
         if face_restore_model != "none":
 
             logger.status(f"Restoring with {face_restore_model}")
-            # print(f"Restoring with {face_restore_model}")
 
-            # model_path = os.path.join(os.path.dirname(__file__), "models", "facerestore_models", face_restore_model)
             model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
-            sd = comfy.utils.load_torch_file(model_path, safe_load=True)
-            facerestore_model = model_loading.load_state_dict(sd).eval()
 
             device = model_management.get_torch_device()
+            
+            if "codeformer" in face_restore_model.lower():
+                
+                codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
+                    dim_embd=512,
+                    codebook_size=1024,
+                    n_head=8,
+                    n_layers=9,
+                    connect_list=["32", "64", "128", "256"],
+                ).to(device)
+                checkpoint = torch.load(model_path)["params_ema"]
+                codeformer_net.load_state_dict(checkpoint)
+                facerestore_model = codeformer_net.eval()
+            
+            else:
+
+                sd = comfy.utils.load_torch_file(model_path, safe_load=True)
+                facerestore_model = model_loading.load_state_dict(sd).eval()
+
             facerestore_model.to(device)
+            
             if self.face_helper is None:
                 self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
 
@@ -179,14 +189,17 @@ class reactor:
 
                     try:
                         with torch.no_grad():
-                            output = facerestore_model(cropped_face_t)[0]
+                            output = facerestore_model(cropped_face_t, w=codeformer_weight)[0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
                             restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
                         del output
                         torch.cuda.empty_cache()
                     except Exception as error:
                         print(f'\tFailed inference for CodeFormer: {error}', file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
-                    restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
+                    
+                    if face_restore_visibility < 1:
+                        restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
+                    
                     restored_face = restored_face.astype('uint8')
                     self.face_helper.add_restored_face(restored_face)
 
@@ -205,10 +218,9 @@ class reactor:
             restored_img_np = np.array(out_images).astype(np.float32) / 255.0
             restored_img_tensor = torch.from_numpy(restored_img_np)
 
-            return (restored_img_tensor,face_model_to_provide)
-        
-        else:
-            return (result,face_model_to_provide)
+            result = restored_img_tensor
+
+        return (result,face_model_to_provide)
 
 class LoadFaceModel:
     @classmethod

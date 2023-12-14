@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.0-brightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta1-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -55,15 +55,13 @@
 
 ## What's new in the latest update
 
-### 0.4.0 <sub><sup>BETA2</sup></sub>
+### 0.4.1 <sub><sup>BETA1</sup></sub>
 
-- Ability to build and save face models directly from an image:
+- Face Restore Visibility and CodeFormer Weight (Fidelity) options are now available! Don't forget to reload the Node in your existing workflow
 
-<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-03" width="50%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.1-whatsnew-01.jpg?raw=true" alt="0.4.1-whatsnew-01" width="100%"/>
 
-- Both the inputs are optional now, just connect one of them according to your workflow; if both is connected - `image` has a priority.
-
-### 0.4.0 <sub><sup>BETA1</sup></sub>
+### 0.4.0
 
 - Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
 - You can now save face models as "safetensors" files (`ComfyUI\models\reactor\faces`) and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use:
@@ -71,6 +69,11 @@
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-01.jpg?raw=true" alt="0.4.0-whatsnew-01" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-02.jpg?raw=true" alt="0.4.0-whatsnew-02" width="100%"/>
 
+- Ability to build and save face models directly from an image:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.0-whatsnew-03.jpg?raw=true" alt="0.4.0-whatsnew-03" width="50%"/>
+
+- Both the inputs are optional, just connect one of them according to your workflow; if both is connected - `image` has a priority.
 - Different fixes making this extension better.
 
 Thanks to everyone who finds bugs, suggests new features and supports this project!
