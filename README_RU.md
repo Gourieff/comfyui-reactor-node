@@ -68,6 +68,18 @@
 
       python_embeded\python.exe -m pip install basicsr
 
+Если вы видите ошибки, связанные с пакетом "future-0.18.3", сделайте следующее:
+
+- Скачайте https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl<br>
+
+- Скопируйте файл в корневую папку ComfyUI и выполните в консоли:
+
+      python_embeded\python.exe -m pip install future-0.18.3-py3-none-any.whl
+
+- Затем:
+
+      python_embeded\python.exe -m pip install basicsr
+
 ### 0.4.0
 
 - Вход "input_image" теперь идёт первым, это даёт возможность корректного байпаса, а также это правильно с точки зрения расположения входов (главный вход - первый);

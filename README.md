@@ -68,6 +68,18 @@ To install this package you should run "install.bat" (inside ReActor's folder) o
 
       python_embeded\python.exe -m pip install basicsr
 
+If you see errors with building "future-0.18.3" package, do the following:
+
+- Download https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl<br>
+
+- Put it to ComfyUI root and run:
+
+      python_embeded\python.exe -m pip install future-0.18.3-py3-none-any.whl
+
+- Then:
+
+      python_embeded\python.exe -m pip install basicsr
+
 ### 0.4.0
 
 - Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
