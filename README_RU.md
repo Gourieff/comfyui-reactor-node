@@ -61,6 +61,13 @@
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.1-whatsnew-01.jpg?raw=true" alt="0.4.1-whatsnew-01" width="100%"/>
 
+После обновления вы можете столкнуться со следующей ошибкой:<br>
+`ModuleNotFoundError: No module named 'basicsr'`<br>
+Причина в том, что ComfyUI не включает по умолчанию в свой состав библиотеку "basicsr" - но без этой библиотеки пользователю не достурны все опции инструмента CodeFormer.<br>
+Для того, чтобы установить этот пакет, запустите "install.bat" (внутри папки ReActor) или установите вручную из корневой директории ComfyUI:
+
+      python_embeded\python.exe -m pip install basicsr
+
 ### 0.4.0
 
 - Вход "input_image" теперь идёт первым, это даёт возможность корректного байпаса, а также это правильно с точки зрения расположения входов (главный вход - первый);
