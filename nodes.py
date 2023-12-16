@@ -70,10 +70,10 @@ class reactor:
                 "face_restore_model": (get_model_names(get_restorers),),
                 "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.1, "max": 1, "step": 0.05}),
                 "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
-                "detect_gender_input": (["no","female","male"], {"default": "no"}),
-                "detect_gender_source": (["no","female","male"], {"default": "no"}),
-                "input_faces_index": ("STRING", {"default": "0"}),
-                "source_faces_index": ("STRING", {"default": "0"}),
+                "detect_gender_input": (["no","female","male"], {"default": "no"}), # Source and input inverted for consistency with external imput nodes
+                "detect_gender_source": (["no","female","male"], {"default": "no"}), # Source and input inverted for consistency with external imput nodes
+                "input_faces_index": ("STRING", {"default": "0"}), # Source and input inverted for consistency with external imput nodes
+                "source_faces_index": ("STRING", {"default": "0"}), # Source and input inverted for consistency with external imput nodes
                 "console_log_level": ([0, 1, 2], {"default": 1}),
             },
             "optional": {
