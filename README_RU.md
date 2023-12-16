@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_RU.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/версия_нода-0.4.1_beta1-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/версия_нода-0.4.1_beta2-green?style=for-the-badge&labelColor=darkgreen)
   
   <sup>
   <font color=brightred>
@@ -242,6 +242,17 @@ ReActor заменит только то лицо, которое удовлет
 3. Готово!
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/reactor-w-controlnet.png?raw=true" alt="reactor+controlnet" />
+
+### **V. "ModuleNotFoundError: No module named 'basicsr'" или "subprocess-exited-with-error" при установке пакета future-0.18.3**
+
+- Скачайте https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl<br>
+- Скопируйте файл в корневую папку ComfyUI и выполните в консоли:
+
+      python_embeded\python.exe -m pip install future-0.18.3-py3-none-any.whl
+
+- Затем:
+
+      python_embeded\python.exe -m pip install basicsr
 
 <a name="updating">
 
