@@ -254,6 +254,16 @@ ReActor заменит только то лицо, которое удовлет
 
       python_embeded\python.exe -m pip install basicsr
 
+### **VI. "fatal: fetch-pack: invalid index-pack output" при исполнении команды `git clone`"**
+
+Попробуйте клонировать репозиторий с параметром `--depth=1` (только последний коммит):
+
+     git clone --depth=1 https://github.com/Gourieff/comfyui-reactor-node
+
+Затем вытяните оставшееся (если требуется):
+
+     git fetch --unshallow
+
 <a name="updating">
 
 ## Обновление

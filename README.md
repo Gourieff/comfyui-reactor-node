@@ -249,6 +249,16 @@ Remove the current ReActor Node from your workflow and add it again
 
       python_embeded\python.exe -m pip install basicsr
 
+### **VI. "fatal: fetch-pack: invalid index-pack output" when you try to `git clone` the repository"**
+
+Try to clone with `--depth=1` (last commit only):
+
+     git clone --depth=1 https://github.com/Gourieff/comfyui-reactor-node
+
+Then retrieve the rest (if you need):
+
+     git fetch --unshallow
+
 ## Updating
 
 Just put .bat or .sh script from this [Repo](https://github.com/Gourieff/sd-webui-extensions-updater) to the `ComfyUI\custom_nodes` directory and run it when you need to check for updates
