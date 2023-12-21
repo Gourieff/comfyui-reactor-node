@@ -24,9 +24,6 @@ model_url = "https://github.com/facefusion/facefusion-assets/releases/download/m
 model_name = os.path.basename(model_url)
 models_dir_path = os.path.join(models_dir, "insightface")
 model_path = os.path.join(models_dir_path, model_name)
-# DEPRECATED:
-# models_dir_old = os.path.abspath("models/insightface")
-# model_path_old = os.path.join(models_dir_old, model_name)
 
 def run_pip(*args):
     subprocess.run([sys.executable, "-m", "pip", "install", "--no-warn-script-location", *args])
@@ -61,12 +58,25 @@ def download(url, path):
 if not os.path.exists(models_dir_path):
     os.makedirs(models_dir_path)
 
-# DEPRECATED:
-# if os.path.exists(models_dir_old):
-#     shutil.move(model_path_old, model_path)
-
 if not os.path.exists(model_path):
     download(model_url, model_path)
+
+if not is_installed("future"):
+    future_package_url = "https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl"
+    future_package_name = os.path.basename(future_package_url) 
+    reacor_models_path = os.path.join(models_dir, "reactor")
+    dl_path = os.path.join(reacor_models_path, "downloads")
+    if not os.path.exists(reacor_models_path):
+        os.makedirs(reacor_models_path)
+    if not os.path.exists(dl_path):
+        os.makedirs(dl_path)
+    future_package_path = os.path.join(dl_path, future_package_name)
+    download(future_package_url,future_package_path)
+    try:
+        run_pip(future_package_path)
+    except:
+        print(f"Error: Cannot install {future_package_name}")
+
 
 with open(req_file) as file:
     try:
