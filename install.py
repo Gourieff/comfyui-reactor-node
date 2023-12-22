@@ -61,21 +61,21 @@ if not os.path.exists(models_dir_path):
 if not os.path.exists(model_path):
     download(model_url, model_path)
 
-if not is_installed("future"):
-    future_package_url = "https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl"
-    future_package_name = os.path.basename(future_package_url) 
-    reacor_models_path = os.path.join(models_dir, "reactor")
-    dl_path = os.path.join(reacor_models_path, "downloads")
-    if not os.path.exists(reacor_models_path):
-        os.makedirs(reacor_models_path)
-    if not os.path.exists(dl_path):
-        os.makedirs(dl_path)
-    future_package_path = os.path.join(dl_path, future_package_name)
-    download(future_package_url,future_package_path)
-    try:
-        run_pip(future_package_path)
-    except:
-        print(f"Error: Cannot install {future_package_name}")
+# if not is_installed("future"):
+#     future_package_url = "https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl"
+#     future_package_name = os.path.basename(future_package_url) 
+#     reactor_models_path = os.path.join(models_dir, "reactor")
+#     dl_path = os.path.join(reactor_models_path, "downloads")
+#     if not os.path.exists(reactor_models_path):
+#         os.makedirs(reactor_models_path)
+#     if not os.path.exists(dl_path):
+#         os.makedirs(dl_path)
+#     future_package_path = os.path.join(dl_path, future_package_name)
+#     download(future_package_url,future_package_path)
+#     try:
+#         run_pip(future_package_path)
+#     except:
+#         print(f"Error: Cannot install {future_package_name}")
 
 
 with open(req_file) as file:
