@@ -93,6 +93,10 @@ def get_face_gender(
         for x in face
     ]
     gender.reverse()
+    # If index is outside of bounds, return None, avoid exception
+    if face_index >= len(gender):
+        logger.status("Requested face index (%s) is out of bounds (max available index is %s)", face_index, len(gender))
+        return None, 0
     face_gender = gender[face_index]
     logger.status("%s Face %s: Detected Gender -%s-", operated, face_index, face_gender)
     if (gender_condition == 1 and face_gender == "F") or (gender_condition == 2 and face_gender == "M"):
@@ -231,11 +235,17 @@ def swap_face(
                 logger.status("Using Hashed Target Face(s) Model...")
                 target_faces = TARGET_FACES
 
+            # No use in trying to swap faces if no faces are found, enhancement
+            if len(target_faces) == 0:
+                logger.status("Cannot detect any Target, skipping swapping...")
+                return result_image
+
             if source_img is not None:
-                source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+                # separated management of wrong_gender between source and target, enhancement
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
             else:
                 source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
-                wrong_gender = 0
+                src_wrong_gender = 0
 
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
@@ -247,27 +257,38 @@ def swap_face(
                 source_face_idx = 0
 
                 for face_num in faces_index:
+                    # No use in trying to swap faces if no further faces are found, enhancement
+                    if face_num >= len(target_faces):
+                        logger.status("Checked all existing target faces, skipping swapping...")
+                        break
+
                     if len(source_faces_index) > 1 and source_face_idx > 0:
-                        source_face, wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
+                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
                     source_face_idx += 1
 
-                    if source_face is not None and wrong_gender == 0:
+                    if source_face is not None and src_wrong_gender == 0:
                         target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target)
                         if target_face is not None and wrong_gender == 0:
                             logger.status(f"Swapping...")
                             result = face_swapper.get(result, target_face, source_face)
                         elif wrong_gender == 1:
                             wrong_gender = 0
-                            if source_face_idx == len(source_faces_index):
-                                result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-                                return result_image
+                            # Keep searching for other faces if wrong gender is detected, enhancement
+                            #if source_face_idx == len(source_faces_index):
+                            #    result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                            #    return result_image
+                            logger.status("Wrong target gender detected")
+                            continue
                         else:
                             logger.status(f"No target face found for {face_num}")
-                    elif wrong_gender == 1:
-                        wrong_gender = 0
-                        if source_face_idx == len(source_faces_index):
-                            result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-                            return result_image
+                    elif src_wrong_gender == 1:
+                        src_wrong_gender = 0
+                        # Keep searching for other faces if wrong gender is detected, enhancement
+                        #if source_face_idx == len(source_faces_index):
+                        #    result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+                        #    return result_image
+                        logger.status("Wrong source gender detected")
+                        continue
                     else:
                         logger.status(f"No source face found for face number {source_face_idx}.")
 
