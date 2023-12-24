@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta2-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta4-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -60,25 +60,6 @@
 - Face Restore Visibility and CodeFormer Weight (Fidelity) options are now available! Don't forget to reload the Node in your existing workflow
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.1-whatsnew-01.jpg?raw=true" alt="0.4.1-whatsnew-01" width="100%"/>
-
-After update you may encounter the following error:<br>
-`ModuleNotFoundError: No module named 'basicsr'`<br>
-The reason is that ComfyUI doesn't have "basicsr" lib by default - but without this lib CodeFormer doesn't have all its options available to user.<br>
-To install this package you should run "install.bat" (inside ReActor's folder) or do it manually from ComfyUI root:
-
-      python_embeded\python.exe -m pip install basicsr
-
-If you see errors with building "future-0.18.3" package, do the following:
-
-- Download https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl<br>
-
-- Put it to ComfyUI root and run:
-
-      python_embeded\python.exe -m pip install future-0.18.3-py3-none-any.whl
-
-- Then:
-
-      python_embeded\python.exe -m pip install basicsr
 
 ### 0.4.0
 
