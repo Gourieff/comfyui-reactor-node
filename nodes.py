@@ -1,14 +1,14 @@
 import os, glob, sys
 
-# import torch
-# from torchvision.transforms.functional import normalize
+import torch
+from torchvision.transforms.functional import normalize
 import numpy as np
 import cv2
 
 from modules.processing import StableDiffusionProcessingImg2Img
-# from comfy_extras.chainner_models import model_loading
-# import model_management
-# import comfy.utils
+from comfy_extras.chainner_models import model_loading
+import model_management
+import comfy.utils
 import folder_paths
 
 from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model, analyze_faces
@@ -17,18 +17,16 @@ from reactor_utils import (
     batch_tensor_to_pil,
     batched_pil_to_tensor,
     tensor_to_pil,
-    # img2tensor,
-    # tensor2img,
-    # move_path,
+    img2tensor,
+    tensor2img,
     save_face_model,
     load_face_model,
     download
 )
 from reactor_log_patch import apply_logging_patch
-from scripts.reactor_facerestore import restore_face
-# from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
-# from basicsr.utils.registry import ARCH_REGISTRY
-# import scripts.r_archs.codeformer_arch
+from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
+from basicsr.utils.registry import ARCH_REGISTRY
+import scripts.r_archs.codeformer_arch
 
 
 models_dir = folder_paths.models_dir
@@ -112,6 +110,107 @@ class reactor:
     def __init__(self):
         self.face_helper = None
 
+    def restore_face(
+            self,
+            input_image,
+            face_restore_model,
+            face_restore_visibility,
+            codeformer_weight,
+            facedetection
+        ):
+
+        result = input_image
+
+        if face_restore_model != "none":
+
+            logger.status(f"Restoring with {face_restore_model}")
+
+            model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
+
+            device = model_management.get_torch_device()
+            
+            if "codeformer" in face_restore_model.lower():
+                
+                codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
+                    dim_embd=512,
+                    codebook_size=1024,
+                    n_head=8,
+                    n_layers=9,
+                    connect_list=["32", "64", "128", "256"],
+                ).to(device)
+                checkpoint = torch.load(model_path)["params_ema"]
+                codeformer_net.load_state_dict(checkpoint)
+                facerestore_model = codeformer_net.eval()
+            
+            else:
+
+                sd = comfy.utils.load_torch_file(model_path, safe_load=True)
+                facerestore_model = model_loading.load_state_dict(sd).eval()
+
+            facerestore_model.to(device)
+            
+            if self.face_helper is None:
+                self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
+
+            image_np = 255. * result.cpu().numpy()
+
+            total_images = image_np.shape[0]
+            out_images = np.ndarray(shape=image_np.shape)
+
+            for i in range(total_images):
+                cur_image_np = image_np[i,:, :, ::-1]
+
+                original_resolution = cur_image_np.shape[0:2]
+
+                if facerestore_model is None or self.face_helper is None:
+                    return result
+
+                self.face_helper.clean_all()
+                self.face_helper.read_image(cur_image_np)
+                self.face_helper.get_face_landmarks_5(only_center_face=False, resize=640, eye_dist_threshold=5)
+                self.face_helper.align_warp_face()
+
+                restored_face = None
+                for idx, cropped_face in enumerate(self.face_helper.cropped_faces):
+                    cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+                    normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+                    cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
+
+                    try:
+                        with torch.no_grad():
+                            output = facerestore_model(cropped_face_t, w=codeformer_weight)[0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
+                            restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
+                        del output
+                        torch.cuda.empty_cache()
+                    except Exception as error:
+                        print(f'\tFailed inference for CodeFormer: {error}', file=sys.stderr)
+                        restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
+                    
+                    if face_restore_visibility < 1:
+                        restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
+                    
+                    restored_face = restored_face.astype('uint8')
+                    self.face_helper.add_restored_face(restored_face)
+
+                self.face_helper.get_inverse_affine(None)
+
+                restored_img = self.face_helper.paste_faces_to_input_image()
+                restored_img = restored_img[:, :, ::-1]
+
+                if original_resolution != restored_img.shape[0:2]:
+                    restored_img = cv2.resize(restored_img, (0, 0), fx=original_resolution[1]/restored_img.shape[1], fy=original_resolution[0]/restored_img.shape[0], interpolation=cv2.INTER_LINEAR)
+
+                self.face_helper.clean_all()
+
+                out_images[i] = restored_img
+
+            restored_img_np = np.array(out_images).astype(np.float32) / 255.0
+            restored_img_tensor = torch.from_numpy(restored_img_np)
+
+            result = restored_img_tensor
+
+        return result
+    
     def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
@@ -119,7 +218,6 @@ class reactor:
             return (input_image,face_model)
         elif source_image is None and face_model is None:
             logger.error("Please provide 'source_image' or `face_model`")
-            # print("ReActor Node: Please provide 'source_image' or `face_model`")
             return (input_image,face_model)
 
         if face_model == "none":
@@ -152,8 +250,11 @@ class reactor:
             face_model_to_provide = current_face_model[0] if (current_face_model is not None and len(current_face_model) > 0) else face_model
         else:
             face_model_to_provide = face_model
-          
-        return restore_face(self.face_helper,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,face_model_to_provide)
+        
+        result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection)
+
+        return (result,face_model_to_provide)
+
 
 class LoadFaceModel:
     @classmethod
@@ -177,6 +278,7 @@ class LoadFaceModel:
         else:
             out = None
         return (out, )
+
 
 class SaveFaceModel:
     def __init__(self):
@@ -217,6 +319,7 @@ class SaveFaceModel:
             logger.error("Please provide `face_model` or `image`")
         return face_model_name
 
+
 class RestoreFace:
     @classmethod
     def INPUT_TYPES(s):
@@ -238,7 +341,8 @@ class RestoreFace:
         self.face_helper = None
 
     def execute(self, image, model, visibility, codeformer_weight, facedetection):
-        return restore_face(self.face_helper,image,model,visibility,codeformer_weight,facedetection)
+        result = reactor.restore_face(self,image,model,visibility,codeformer_weight,facedetection)
+        return (result,)
 
 
 NODE_CLASS_MAPPINGS = {
