@@ -11,6 +11,7 @@ import model_management
 import comfy.utils
 import folder_paths
 
+import scripts.reactor_version
 from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model, analyze_faces
 from scripts.reactor_logger import logger
 from reactor_utils import (
