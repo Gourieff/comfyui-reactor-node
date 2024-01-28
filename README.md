@@ -55,6 +55,12 @@
 
 ## What's new in the latest update
 
+### 0.4.1 <sub><sup>BETA8</sup></sub>
+
+- Seperate Node for the Face Restoration postprocessing (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), can be found inside ReActor's menu (RestoreFace Node)
+- (Windows) Installation can be done for Python from the System's PATH
+- Different fixes and improvements
+
 ### 0.4.1 <sub><sup>BETA1</sup></sub>
 
 - Face Restore Visibility and CodeFormer Weight (Fidelity) options are now available! Don't forget to reload the Node in your existing workflow

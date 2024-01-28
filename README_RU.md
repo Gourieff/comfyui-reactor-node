@@ -55,6 +55,12 @@
 
 ## Что нового в последнем обновлении
 
+### 0.4.1 <sub><sup>BETA8</sup></sub>
+
+- Отдельный Нод для восстаноления лиц (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), располагается внутри меню ReActor (нод RestoreFace)
+- (Windows) Установка зависимостей теперь может быть выполнена в Python из PATH ОС
+- Разные исправления и улучшения
+
 ### 0.4.1 <sub><sup>BETA1</sup></sub>
 
 - Face Restore Visibility и CodeFormer Weight (Fidelity) теперь доступны; не забудьте заново добавить Нод в ваших существующих воркфлоу
