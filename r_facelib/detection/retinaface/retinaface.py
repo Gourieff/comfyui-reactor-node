@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision.models._utils import IntermediateLayerGetter as IntermediateLayerGetter
 
+from modules import shared
+
 from r_facelib.detection.align_trans import get_reference_facial_points, warp_and_crop_face
 from r_facelib.detection.retinaface.retinaface_net import FPN, SSH, MobileNetV1, make_bbox_head, make_class_head, make_landmark_head
 from r_facelib.detection.retinaface.retinaface_utils import (PriorBox, batched_decode, batched_decode_landm, decode, decode_landm,
@@ -16,8 +18,16 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 elif torch.backends.mps.is_available():
     device = torch.device('mps')
-elif hasattr(torch,'dml'):
-    device = torch.device('dml')
+# elif hasattr(torch,'dml'):
+#     device = torch.device('dml')
+elif hasattr(torch,'dml') or hasattr(torch,'privateuseone'): # AMD
+    if shared.cmd_opts is not None: # A1111
+        if shared.cmd_opts.device_id is not None:
+            device = torch.device(f'privateuseone:{shared.cmd_opts.device_id}')
+        else:
+            device = torch.device('privateuseone:0')
+    else:
+        device = torch.device('privateuseone:0')
 else:
     device = torch.device('cpu')
 

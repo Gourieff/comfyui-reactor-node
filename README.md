@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta8-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta9-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -54,6 +54,11 @@
 <a name="latestupdate">
 
 ## What's new in the latest update
+
+### 0.4.1 <sub><sup>BETA9</sup></sub>
+
+- CUDA 12 Support - don't forget to run (Windows) `install.bat` or (Linux/MacOS) `install.py` for ComfyUI's Python enclosure or try to install ORT-GPU for CU12 manually (https://onnxruntime.ai/docs/install/#install-onnx-runtime-gpu-cuda-12x)
+- Issue https://github.com/Gourieff/comfyui-reactor-node/issues/173 fix
 
 ### 0.4.1 <sub><sup>BETA8</sup></sub>
 
