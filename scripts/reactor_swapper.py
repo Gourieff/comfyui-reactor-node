@@ -227,6 +227,7 @@ def swap_face(
                 logger.status("Analyzing Target Image...")
                 target_faces = analyze_faces(target_img)
                 TARGET_FACES = target_faces
+                logger.status(f"Analyzed Target Image Face(s) {len(target_faces)}...")
             elif target_image_same:
                 logger.status("Using Hashed Target Face(s) Model...")
                 target_faces = TARGET_FACES
@@ -237,7 +238,9 @@ def swap_face(
                 source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
                 wrong_gender = 0
 
-            if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
+            if not target_faces:
+                logger.status("No target face(s) found yet")
+            elif len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
             elif source_face is not None:
                 result = target_img
