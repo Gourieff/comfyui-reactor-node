@@ -65,9 +65,16 @@ with open(req_file) as file:
     try:
         ort = "onnxruntime-gpu"
         import torch
-        if torch.backends.mps.is_available() or hasattr(torch,'dml'):
+        cuda_version = None
+        if torch.cuda.is_available():
+            cuda_version = torch.version.cuda
+            print(f"CUDA {cuda_version}")
+        elif torch.backends.mps.is_available() or hasattr(torch,'dml') or hasattr(torch,'privateuseone'):
             ort = "onnxruntime"
-        if not is_installed(ort,"1.16.1",False):
+        if cuda_version is not None and float(cuda_version)>=12: # CU12
+            if not is_installed(ort,"1.17.0",False):
+                run_pip(ort,"--extra-index-url", "https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/")
+        elif not is_installed(ort,"1.16.1",False):
             run_pip(ort, "-U")
     except Exception as e:
         print(e)
