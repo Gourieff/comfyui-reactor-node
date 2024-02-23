@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta4-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.1_beta8-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -54,6 +54,12 @@
 <a name="latestupdate">
 
 ## What's new in the latest update
+
+### 0.4.1 <sub><sup>BETA8</sup></sub>
+
+- Seperate Node for the Face Restoration postprocessing (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), can be found inside ReActor's menu (RestoreFace Node)
+- (Windows) Installation can be done for Python from the System's PATH
+- Different fixes and improvements
 
 ### 0.4.1 <sub><sup>BETA1</sup></sub>
 

@@ -7,6 +7,8 @@ import logging
 import hashlib
 from insightface.app.common import Face
 from safetensors.torch import save_file, safe_open
+from tqdm import tqdm
+import urllib.request
 
 
 def tensor_to_pil(img_tensor, batch_index=0):
@@ -92,6 +94,12 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     if len(result) == 1:
         result = result[0]
     return result
+
+def download(url, path, name):
+    request = urllib.request.urlopen(url)
+    total = int(request.headers.get('Content-Length', 0))
+    with tqdm(total=total, desc=f'[ReActor] Downloading {name} to {path}', unit='B', unit_scale=True, unit_divisor=1024) as progress:
+        urllib.request.urlretrieve(url, path, reporthook=lambda count, block_size, total_size: progress.update(block_size))
 
 def move_path(old_path, new_path):
     if os.path.exists(old_path):

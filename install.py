@@ -2,7 +2,7 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import subprocess
-import os, sys, shutil
+import os, sys
 try:
     from pkg_resources import get_distribution as distributions
 except:
@@ -20,7 +20,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 req_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "requirements.txt")
 
-model_url = "https://github.com/facefusion/facefusion-assets/releases/download/models/inswapper_128.onnx"
+model_url = "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/inswapper_128.onnx"
 model_name = os.path.basename(model_url)
 models_dir_path = os.path.join(models_dir, "insightface")
 model_path = os.path.join(models_dir_path, model_name)
@@ -49,34 +49,17 @@ def is_installed (
         print(f"Status: {e}")
         return False
     
-def download(url, path):
+def download(url, path, name):
     request = urllib.request.urlopen(url)
     total = int(request.headers.get('Content-Length', 0))
-    with tqdm(total=total, desc='Downloading', unit='B', unit_scale=True, unit_divisor=1024) as progress:
+    with tqdm(total=total, desc=f'[ReActor] Downloading {name} to {path}', unit='B', unit_scale=True, unit_divisor=1024) as progress:
         urllib.request.urlretrieve(url, path, reporthook=lambda count, block_size, total_size: progress.update(block_size))
 
 if not os.path.exists(models_dir_path):
     os.makedirs(models_dir_path)
 
 if not os.path.exists(model_path):
-    download(model_url, model_path)
-
-# if not is_installed("future"):
-#     future_package_url = "https://github.com/Gourieff/Assets/raw/main/comfyui-reactor-node/future-0.18.3-py3-none-any.whl"
-#     future_package_name = os.path.basename(future_package_url) 
-#     reactor_models_path = os.path.join(models_dir, "reactor")
-#     dl_path = os.path.join(reactor_models_path, "downloads")
-#     if not os.path.exists(reactor_models_path):
-#         os.makedirs(reactor_models_path)
-#     if not os.path.exists(dl_path):
-#         os.makedirs(dl_path)
-#     future_package_path = os.path.join(dl_path, future_package_name)
-#     download(future_package_url,future_package_path)
-#     try:
-#         run_pip(future_package_path)
-#     except:
-#         print(f"Error: Cannot install {future_package_name}")
-
+    download(model_url, model_path, model_name)
 
 with open(req_file) as file:
     try:
