@@ -9,9 +9,11 @@ from modules.processing import (
     StableDiffusionProcessing,
     StableDiffusionProcessingImg2Img,
 )
+from modules.shared import state
 from scripts.reactor_logger import logger
 from scripts.reactor_swapper import swap_face, get_current_faces_model, analyze_faces, half_det_size
 import folder_paths
+import comfy.model_management as model_management
 
 
 def get_models():
@@ -76,6 +78,9 @@ class FaceSwapScript(scripts.Script):
                 logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
 
                 for i in range(len(p.init_images)):
+                    if state.interrupted or model_management.processing_interrupted():
+                        logger.status("Interrupted by User")
+                        break
                     if len(p.init_images) > 1:
                         logger.status(f"Swap in %s", i)
                     result = swap_face(

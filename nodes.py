@@ -7,7 +7,7 @@ import cv2
 
 from modules.processing import StableDiffusionProcessingImg2Img
 from comfy_extras.chainner_models import model_loading
-import model_management
+import comfy.model_management as model_management
 import comfy.utils
 import folder_paths
 
@@ -128,7 +128,7 @@ class reactor:
 
         result = input_image
 
-        if face_restore_model != "none":
+        if face_restore_model != "none" and not model_management.processing_interrupted():
 
             logger.status(f"Restoring with {face_restore_model}")
 
