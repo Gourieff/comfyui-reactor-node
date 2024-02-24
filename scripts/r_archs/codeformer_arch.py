@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from typing import Optional, List
 
 from scripts.r_archs.vqgan_arch import *
-from basicsr.utils import get_root_logger
-from basicsr.utils.registry import ARCH_REGISTRY
+from r_basicsr.utils import get_root_logger
+from r_basicsr.utils.registry import ARCH_REGISTRY
 
 
 def calc_mean_std(feat, eps=1e-5):

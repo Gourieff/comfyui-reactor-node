@@ -12,7 +12,13 @@ import comfy.utils
 import folder_paths
 
 import scripts.reactor_version
-from scripts.reactor_faceswap import FaceSwapScript, get_models, get_current_faces_model, analyze_faces
+from scripts.reactor_faceswap import (
+    FaceSwapScript,
+    get_models,
+    get_current_faces_model,
+    analyze_faces,
+    half_det_size
+)
 from scripts.reactor_logger import logger
 from reactor_utils import (
     batch_tensor_to_pil,
@@ -26,7 +32,7 @@ from reactor_utils import (
 )
 from reactor_log_patch import apply_logging_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
-from basicsr.utils.registry import ARCH_REGISTRY
+from r_basicsr.utils.registry import ARCH_REGISTRY
 import scripts.r_archs.codeformer_arch
 
 
@@ -92,10 +98,10 @@ class reactor:
                 "face_restore_model": (get_model_names(get_restorers),),
                 "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.1, "max": 1, "step": 0.05}),
                 "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
-                "detect_gender_input": (["no","female","male"], {"default": "no"}), # Source and input inverted for consistency with external imput nodes
-                "detect_gender_source": (["no","female","male"], {"default": "no"}), # Source and input inverted for consistency with external imput nodes
-                "input_faces_index": ("STRING", {"default": "0"}), # Source and input inverted for consistency with external imput nodes
-                "source_faces_index": ("STRING", {"default": "0"}), # Source and input inverted for consistency with external imput nodes
+                "detect_gender_input": (["no","female","male"], {"default": "no"}),
+                "detect_gender_source": (["no","female","male"], {"default": "no"}),
+                "input_faces_index": ("STRING", {"default": "0"}),
+                "source_faces_index": ("STRING", {"default": "0"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
             },
             "optional": {
@@ -291,6 +297,7 @@ class SaveFaceModel:
             "required": {
                 "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
                 "face_model_name": ("STRING", {"default": "default"}),
+                "select_face_index": ("INT", {"default": 0, "min": 0}),
             },
             "optional": {
                 "image": ("IMAGE",),
@@ -305,13 +312,21 @@ class SaveFaceModel:
 
     CATEGORY = "ReActor"
 
-    def save_model(self, save_mode, face_model_name, image=None, face_model=None):
+    def save_model(self, save_mode, face_model_name, select_face_index, image=None, face_model=None, det_size=(640, 640)):
         if save_mode and image is not None:
             source = tensor_to_pil(image)
             source = cv2.cvtColor(np.array(source), cv2.COLOR_RGB2BGR)
             apply_logging_patch(1)
             logger.status("Building Face Model...")
-            face_model = analyze_faces(source)[0]
+            face_model_raw = analyze_faces(source, det_size)
+            if len(face_model_raw) == 0:
+                det_size_half = half_det_size(det_size)
+                face_model_raw = analyze_faces(source, det_size_half)
+            try:
+                face_model = face_model_raw[select_face_index]
+            except:
+                logger.error("No face(s) found")
+                return face_model_name
             logger.status("--Done!--")
         if save_mode and (face_model != "none" or face_model is not None):
             face_model_path = os.path.join(self.output_dir, face_model_name + ".safetensors")
