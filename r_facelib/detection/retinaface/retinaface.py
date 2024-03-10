@@ -136,6 +136,7 @@ class RetinaFace(nn.Module):
             self.half()
 
     def forward(self, inputs):
+        self.to(device)
         out = self.body(inputs)
 
         if self.backbone == 'mobilenet0.25' or self.backbone == 'Resnet50':
