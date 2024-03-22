@@ -4,6 +4,10 @@ import torch
 from torchvision.transforms.functional import normalize
 import numpy as np
 import cv2
+from typing import List
+from PIL import Image
+from scipy import stats
+from insightface.app.common import Face
 
 from modules.processing import StableDiffusionProcessingImg2Img
 from comfy_extras.chainner_models import model_loading
@@ -112,7 +116,7 @@ class reactor:
 
     RETURN_TYPES = ("IMAGE","FACE_MODEL")
     FUNCTION = "execute"
-    CATEGORY = "ReActor"
+    CATEGORY = "🌌 ReActor"
 
     def __init__(self):
         self.face_helper = None
@@ -274,7 +278,7 @@ class LoadFaceModel:
     
     RETURN_TYPES = ("FACE_MODEL",)
     FUNCTION = "load_model"
-    CATEGORY = "ReActor"
+    CATEGORY = "🌌 ReActor"
 
     def load_model(self, face_model):
         self.face_model = face_model
@@ -285,6 +289,101 @@ class LoadFaceModel:
         else:
             out = None
         return (out, )
+
+class BuildFaceModel:
+    def __init__(self):
+        self.output_dir = FACE_MODELS_PATH
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "images": ("IMAGE",),
+                "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
+                "face_model_name": ("STRING", {"default": "default"}),
+                "compute_method": (["Mean", "Median", "Mode"], {"default": "Mean"}),
+            }
+        }
+
+    RETURN_TYPES = ()
+    FUNCTION = "blend_faces"
+
+    OUTPUT_NODE = True
+
+    CATEGORY = "🌌 ReActor"
+
+    def build_face_model(self, image: Image.Image, det_size=(640, 640)):
+        if image is None:
+            error_msg = "Please load an Image"
+            logger.error(error_msg)
+            return error_msg
+        image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        face_model = analyze_faces(image, det_size)
+
+        if len(face_model) == 0:
+            det_size_half = half_det_size(det_size)
+            face_model = analyze_faces(image, det_size_half)
+        
+        if face_model is not None and len(face_model) > 0:
+            return face_model[0]
+        else:
+            no_face_msg = "No face found, please try another image"
+            logger.error(no_face_msg)
+            return no_face_msg
+    
+    def blend_faces(self, images, save_mode, face_model_name, compute_method):
+        if save_mode and images is not None:
+
+            faces = []
+            embeddings = []
+            images_list: List[Image.Image] = batch_tensor_to_pil(images)
+
+            apply_logging_patch(1)
+
+            n = len(images_list)
+            import logging
+
+            logging.StreamHandler.terminator = " "
+            for i,image in enumerate(images_list):
+                logger.status(f"Building Face Model {i+1} of {n}...")
+                face = self.build_face_model(image)
+                print(f"{int(((i+1)/n)*100)}%")
+                if isinstance(face, str):
+                    # logger.error(f"No faces found in {images_names[i]}, skipping")
+                    continue
+                faces.append(face)
+                embeddings.append(face.embedding)
+            logging.StreamHandler.terminator = "\n"
+            if len(faces) > 0:
+                compute_method_name = "Mean" if compute_method == 0 else "Median" if compute_method == 1 else "Mode"
+                logger.status(f"Blending with Compute Method {compute_method_name}...")
+                blended_embedding = np.mean(embeddings, axis=0) if compute_method == "Mean" else np.median(embeddings, axis=0) if compute_method == "Median" else stats.mode(embeddings, axis=0)[0].astype(np.float32)
+                blended_face = Face(
+                    bbox=faces[0].bbox,
+                    kps=faces[0].kps,
+                    det_score=faces[0].det_score,
+                    landmark_3d_68=faces[0].landmark_3d_68,
+                    pose=faces[0].pose,
+                    landmark_2d_106=faces[0].landmark_2d_106,
+                    embedding=blended_embedding,
+                    gender=faces[0].gender,
+                    age=faces[0].age
+                )
+                if blended_face is not None:
+                    face_model_path = os.path.join(FACE_MODELS_PATH, face_model_name + ".safetensors")
+                    save_face_model(blended_face,face_model_path)
+                    logger.status("--Done!--")
+                    # done_msg = f"Face model has been saved to '{face_model_path}'"
+                    # logger.status(done_msg)
+                    return face_model_name
+                else:
+                    no_face_msg = "Something went wrong, please try another set of images"
+                    logger.error(no_face_msg)
+                    return face_model_name
+            logger.status("--Done!--")
+        if images is None:
+            logger.error("Please provide `images`")
+        return face_model_name
 
 
 class SaveFaceModel:
@@ -310,7 +409,7 @@ class SaveFaceModel:
 
     OUTPUT_NODE = True
 
-    CATEGORY = "ReActor"
+    CATEGORY = "🌌 ReActor"
 
     def save_model(self, save_mode, face_model_name, select_face_index, image=None, face_model=None, det_size=(640, 640)):
         if save_mode and image is not None:
@@ -351,7 +450,7 @@ class RestoreFace:
 
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "execute"
-    CATEGORY = "ReActor"
+    CATEGORY = "🌌 ReActor"
 
     def __init__(self):
         self.face_helper = None
@@ -366,6 +465,7 @@ NODE_CLASS_MAPPINGS = {
     "ReActorLoadFaceModel": LoadFaceModel,
     "ReActorSaveFaceModel": SaveFaceModel,
     "ReActorRestoreFace": RestoreFace,
+    "ReActorBuildFaceModel": BuildFaceModel,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -373,4 +473,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorLoadFaceModel": "Load Face Model",
     "ReActorSaveFaceModel": "Save Face Model",
     "ReActorRestoreFace": "Restore Face",
+    "ReActorBuildFaceModel": "Build Blended Face Model",
 }
