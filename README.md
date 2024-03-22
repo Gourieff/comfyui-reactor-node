@@ -55,6 +55,20 @@
 
 ## What's new in the latest update
 
+### 0.4.2 <sub><sup>BETA1</sup></sub>
+
+- Due to popular demand - you can now blend several images with persons into one face model file and use it with "Load Face Model" Node or in SD WebUI as well;
+
+Expreiment and create new faces or blend faces of one person to gain better accuracy and likeness!
+
+Just add the ImpactPack's "Make Image Batch" Node as the input to the ReActor's one and load images you want to blend them into one model:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-01.jpg?raw=true" alt="0.4.2-whatsnew-01" width="100%"/>
+
+Result example (the new face was created from 4 faces of different actresses):
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-02.jpg?raw=true" alt="0.4.2-whatsnew-02" width="100%"/>
+
 ### 0.4.1 <sub><sup>BETA9</sup></sub>
 
 - CUDA 12 Support - don't forget to run (Windows) `install.bat` or (Linux/MacOS) `install.py` for ComfyUI's Python enclosure or try to install ORT-GPU for CU12 manually (https://onnxruntime.ai/docs/install/#install-onnx-runtime-gpu-cuda-12x)
