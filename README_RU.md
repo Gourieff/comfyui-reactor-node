@@ -67,7 +67,7 @@
 
 Пример результата (на основе лиц 4-х актрис создано новое лицо):
 
-<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-02.jpg?raw=true" alt="0.4.2-whatsnew-02" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-02.jpg?raw=true" alt="0.4.2-whatsnew-02" width="75%"/>
 
 ### 0.4.1 <sub><sup>BETA9</sup></sub>
 
