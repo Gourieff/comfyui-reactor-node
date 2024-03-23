@@ -59,9 +59,9 @@
 
 - Due to popular demand - you can now blend several images with persons into one face model file and use it with "Load Face Model" Node or in SD WebUI as well;
 
-Expreiment and create new faces or blend faces of one person to gain better accuracy and likeness!
+Experiment and create new faces or blend faces of one person to gain better accuracy and likeness!
 
-Just add the ImpactPack's "Make Image Batch" Node as the input to the ReActor's one and load images you want to blend them into one model:
+Just add the ImpactPack's "Make Image Batch" Node as the input to the ReActor's one and load images you want to blend into one model:
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-01.jpg?raw=true" alt="0.4.2-whatsnew-01" width="100%"/>
 
@@ -78,7 +78,7 @@ Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-react
 
 ### 0.4.1 <sub><sup>BETA8</sup></sub>
 
-- Seperate Node for the Face Restoration postprocessing (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), can be found inside ReActor's menu (RestoreFace Node)
+- Separate Node for the Face Restoration postprocessing (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), can be found inside ReActor's menu (RestoreFace Node)
 - (Windows) Installation can be done for Python from the System's PATH
 - Different fixes and improvements
 
@@ -165,7 +165,7 @@ Connect all required slots and run the query.
 ### Main Node Inputs
 
 - `input_image` - is an image to be processed (target image, analog of "target image" in the SD WebUI extension);
-  - Supported Nodes: "Load Image", "Load Video" or any other nodes providng images as an output;
+  - Supported Nodes: "Load Image", "Load Video" or any other nodes providing images as an output;
 - `source_image` - is an image with a face or faces to swap in the `input_image` (source image, analog of "source image" in the SD WebUI extension);
   - Supported Nodes: "Load Image";
 - `face_model` - is the input for the "Load Face Model" Node or another ReActor node to provide a face model file (face embedding) you created earlier via the "Save Face Model" Node;
@@ -175,7 +175,7 @@ Connect all required slots and run the query.
 
 - `IMAGE` - is an output with the resulted image;
   - Supported Nodes: any nodes which have images as an input;
-- `FACE_MODEL` - is an output providng a source face's model being built during the swapping process;
+- `FACE_MODEL` - is an output providing a source face's model being built during the swapping process;
   - Supported Nodes: "Save Face Model", "ReActor";
 
 ### Face Restoration
@@ -275,20 +275,20 @@ Just put .bat or .sh script from this [Repo](https://github.com/Gourieff/sd-webu
 
 This software is meant to be a productive contribution to the rapidly growing AI-generated media industry. It will help artists with tasks such as animating a custom character or using the character as a model for clothing etc.
 
-The developers of this software are aware of its possible unethical applicaitons and are committed to take preventative measures against them. We will continue to develop this project in the positive direction while adhering to law and ethics.
+The developers of this software are aware of its possible unethical applications and are committed to take preventative measures against them. We will continue to develop this project in the positive direction while adhering to law and ethics.
 
 Users of this software are expected to use this software responsibly while abiding the local law. If face of a real person is being used, users are suggested to get consent from the concerned person and clearly mention that it is a deepfake when posting content online. **Developers and Contributors of this software are not responsible for actions of end-users.**
 
 By using this extension you are agree not to create any content that:
 - violates any laws;
 - causes any harm to a person or persons;
-- propogates (spreads) any information (both public or personal) or images (both public or personal) which could be meant for harm;
+- propagates (spreads) any information (both public or personal) or images (both public or personal) which could be meant for harm;
 - spreads misinformation;
 - targets vulnerable groups of people.
 
 This software utilizes the pre-trained models `buffalo_l` and `inswapper_128.onnx`, which are provided by [InsightFace](https://github.com/deepinsight/insightface/). These models are included under the following conditions:
 
-[From insighface licence](https://github.com/deepinsight/insightface/tree/master/python-package): The InsightFace’s pre-trained models are available for non-commercial research purposes only. This includes both auto-downloading models and manually downloaded models.
+[From insighface license](https://github.com/deepinsight/insightface/tree/master/python-package): The InsightFace’s pre-trained models are available for non-commercial research purposes only. This includes both auto-downloading models and manually downloaded models.
 
 Users of this software must strictly adhere to these conditions of use. The developers and maintainers of this software are not responsible for any misuse of InsightFace’s pre-trained models.
 
@@ -296,7 +296,7 @@ Please note that if you intend to use this software for any commercial purposes,
 
 ### Models Hashsum
 
-#### Safe-to-use models have the folowing hash:
+#### Safe-to-use models have the following hash:
 
 inswapper_128.onnx
 ```
@@ -373,4 +373,4 @@ SHA256:4c06341c33c2ca1f86781dab0e829f88ad5b64be9fba56e56bc9ebdefc619e43
 
 **If you encounter any errors when you use ReActor Node - don't rush to open an issue, first try to remove current ReActor node in your workflow and add it again**
 
-**ReActor Node gets updates from time to time, new functions appears and old node can work with errors or not work at all**
+**ReActor Node gets updates from time to time, new functions appear and old node can work with errors or not work at all**
