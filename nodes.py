@@ -169,6 +169,10 @@ class reactor:
             out_images = np.ndarray(shape=image_np.shape)
 
             for i in range(total_images):
+
+                if total_images > 1:
+                    logger.status(f"Restoring {i+1}")
+
                 cur_image_np = image_np[i,:, :, ::-1]
 
                 original_resolution = cur_image_np.shape[0:2]
