@@ -115,7 +115,8 @@ def half_det_size(det_size):
     return (det_size[0] // 2, det_size[1] // 2)
 
 def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
-    face_analyser = copy.deepcopy(getAnalysisModel())
+    face_analyser = getAnalysisModel()
+    face_analyser.det_model.input_size = None
     face_analyser.prepare(ctx_id=0, det_size=det_size)
     return face_analyser.get(img_data)
 
@@ -136,7 +137,7 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
             det_size_half = half_det_size(det_size)
             return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
         return get_face_gender(face,face_index,gender_target,"Target")
-    
+
     if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
         det_size_half = half_det_size(det_size)
         return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
@@ -172,9 +173,9 @@ def swap_face(
             else:
                 # if no data URL scheme, just decode
                 img_bytes = base64.b64decode(source_img)
-            
+
             source_img = Image.open(io.BytesIO(img_bytes))
-            
+
         target_img = cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR)
 
         if source_img is not None:
@@ -226,7 +227,7 @@ def swap_face(
 
             logger.info("Target Image MD5 Hash = %s", TARGET_IMAGE_HASH)
             logger.info("Target Image the Same? %s", target_image_same)
-            
+
             if TARGET_FACES is None or not target_image_same:
                 logger.status("Analyzing Target Image...")
                 target_faces = analyze_faces(target_img)
@@ -291,11 +292,14 @@ def swap_face(
                         continue
                     else:
                         logger.status(f"No source face found for face number {source_face_idx}.")
+                        raise Exception(f"No source face found for face number {source_face_idx}.")
 
                 result_image = Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
 
             else:
                 logger.status("No source face(s) in the provided Index")
+                raise Exception("No source face(s) in the provided Index")
         else:
             logger.status("No source face(s) found")
+            raise Exception("No source face(s) found")
     return result_image

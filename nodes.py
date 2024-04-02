@@ -54,6 +54,25 @@ os.makedirs(dir_facerestore_models, exist_ok=True)
 folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
 
 
+CODEFORMER_NET = None
+
+def get_codeformer_net(model_path, device):
+    global CODEFORMER_NET
+
+    if CODEFORMER_NET is None:
+        codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
+            dim_embd=512,
+            codebook_size=1024,
+            n_head=8,
+            n_layers=9,
+            connect_list=["32", "64", "128", "256"],
+        ).to(device)
+        checkpoint = torch.load(model_path)["params_ema"]
+        codeformer_net.load_state_dict(checkpoint)
+        CODEFORMER_NET = codeformer_net.eval()
+
+    return CODEFORMER_NET
+
 def get_facemodels():
     models_path = os.path.join(FACE_MODELS_PATH, "*")
     models = glob.glob(models_path)
@@ -96,7 +115,7 @@ class reactor:
         return {
             "required": {
                 "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
-                "input_image": ("IMAGE",),               
+                "input_image": ("IMAGE",),
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (get_model_names(get_restorers),),
@@ -139,27 +158,18 @@ class reactor:
             model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
 
             device = model_management.get_torch_device()
-            
+
             if "codeformer" in face_restore_model.lower():
-                
-                codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
-                    dim_embd=512,
-                    codebook_size=1024,
-                    n_head=8,
-                    n_layers=9,
-                    connect_list=["32", "64", "128", "256"],
-                ).to(device)
-                checkpoint = torch.load(model_path)["params_ema"]
-                codeformer_net.load_state_dict(checkpoint)
-                facerestore_model = codeformer_net.eval()
-            
+
+                facerestore_model = get_codeformer_net(model_path, device)
+
             else:
 
                 sd = comfy.utils.load_torch_file(model_path, safe_load=True)
                 facerestore_model = model_loading.load_state_dict(sd).eval()
 
             facerestore_model.to(device)
-            
+
             if self.face_helper is None:
                 self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
 
@@ -196,10 +206,10 @@ class reactor:
                     except Exception as error:
                         print(f'\tFailed inference for CodeFormer: {error}', file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
-                    
+
                     if face_restore_visibility < 1:
                         restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
-                    
+
                     restored_face = restored_face.astype('uint8')
                     self.face_helper.add_restored_face(restored_face)
 
@@ -221,7 +231,7 @@ class reactor:
             result = restored_img_tensor
 
         return result
-    
+
     def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None):
         apply_logging_patch(console_log_level)
 
@@ -233,7 +243,7 @@ class reactor:
 
         if face_model == "none":
             face_model = None
-        
+
         script = FaceSwapScript()
         pil_images = batch_tensor_to_pil(input_image)
         if source_image is not None:
@@ -261,7 +271,7 @@ class reactor:
             face_model_to_provide = current_face_model[0] if (current_face_model is not None and len(current_face_model) > 0) else face_model
         else:
             face_model_to_provide = face_model
-        
+
         result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection)
 
         return (result,face_model_to_provide)
@@ -275,7 +285,7 @@ class LoadFaceModel:
                 "face_model": (get_model_names(get_facemodels),),
             }
         }
-    
+
     RETURN_TYPES = ("FACE_MODEL",)
     FUNCTION = "load_model"
     CATEGORY = "🌌 ReActor"
@@ -293,7 +303,7 @@ class LoadFaceModel:
 class BuildFaceModel:
     def __init__(self):
         self.output_dir = FACE_MODELS_PATH
-    
+
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -323,14 +333,14 @@ class BuildFaceModel:
         if len(face_model) == 0:
             det_size_half = half_det_size(det_size)
             face_model = analyze_faces(image, det_size_half)
-        
+
         if face_model is not None and len(face_model) > 0:
             return face_model[0]
         else:
             no_face_msg = "No face found, please try another image"
             logger.error(no_face_msg)
             return no_face_msg
-    
+
     def blend_faces(self, images, save_mode, face_model_name, compute_method):
         if save_mode and images is not None:
 
@@ -440,7 +450,7 @@ class RestoreFace:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE",),               
+                "image": ("IMAGE",),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "model": (get_model_names(get_restorers),),
                 "visibility": ("FLOAT", {"default": 1, "min": 0.0, "max": 1, "step": 0.05}),

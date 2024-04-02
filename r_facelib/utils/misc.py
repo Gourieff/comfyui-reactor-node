@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 #import gdown
 
 
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ROOT_DIR = os.path.join(os.getcwd(), "ComfyUI/custom_nodes/_empty")
 
 
 def download_pretrained_models(file_ids, save_path_root):
