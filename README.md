@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.4.2_beta1-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.4.2_beta2-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -54,6 +54,15 @@
 <a name="latestupdate">
 
 ## What's new in the latest update
+
+### 0.4.2 <sub><sup>BETA2</sup></sub>
+
+- GPEN-BFR-512 and RestoreFormer_Plus_Plus face restoration models support
+
+You can download models here: https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models
+<br>Put them into the `ComfyUI\models\facerestore_models` folder
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-04.jpg?raw=true" alt="0.4.2-whatsnew-04" width="100%"/>
 
 ### 0.4.2 <sub><sup>BETA1</sup></sub>
 
@@ -122,9 +131,8 @@ Thanks to everyone who finds bugs, suggests new features and supports this proje
 7. `cd extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node`
 8. `python install.py`
 9.  Please, wait until the installation process will be finished
-10. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `extensions\sd-webui-comfyui\ComfyUI\custom_nodes\comfyui-reactor-node\models\facerestore_models` directory:
-    - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
-    - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+10. (From the version 0.3.0) Download additional facerestorers models from the link below and put them into the `extensions\sd-webui-comfyui\ComfyUI\models\facerestore_models` directory:<br>
+https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models
 11. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
@@ -144,9 +152,8 @@ Thanks to everyone who finds bugs, suggests new features and supports this proje
 2. Go to the `ComfyUI\custom_nodes` directory
 3. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
 4. Run `install.bat`
-5. (From the version 0.3.0) Download facerestorers models from the links below and put them into the `ComfyUI\models\facerestore_models` directory:
-   - CodeFormer: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
-   - GFPGAN: https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth
+5. (From the version 0.3.0) Download additional facerestorers models from the link below and put them into the `ComfyUI\models\facerestore_models` directory:<br>
+https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models
 6. Run ComfyUI and find there ReActor Node inside the menu `ReActor` or by using a search
 
 </details>

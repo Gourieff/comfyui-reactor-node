@@ -11,7 +11,13 @@ from modules.processing import (
 )
 from modules.shared import state
 from scripts.reactor_logger import logger
-from scripts.reactor_swapper import swap_face, get_current_faces_model, analyze_faces, half_det_size
+from scripts.reactor_swapper import (
+    swap_face,
+    get_current_faces_model,
+    analyze_faces,
+    half_det_size,
+    providers
+)
 import folder_paths
 import comfy.model_management as model_management
 
