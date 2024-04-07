@@ -21,7 +21,8 @@ from scripts.reactor_faceswap import (
     get_models,
     get_current_faces_model,
     analyze_faces,
-    half_det_size
+    half_det_size,
+    providers
 )
 from scripts.reactor_logger import logger
 from reactor_utils import (
@@ -32,7 +33,10 @@ from reactor_utils import (
     tensor2img,
     save_face_model,
     load_face_model,
-    download
+    download,
+    set_ort_session,
+    prepare_cropped_face,
+    normalize_cropped_face
 )
 from reactor_log_patch import apply_logging_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
@@ -63,7 +67,7 @@ def get_facemodels():
 def get_restorers():
     models_path = os.path.join(models_dir, "facerestore_models/*")
     models = glob.glob(models_path)
-    models = [x for x in models if x.endswith(".pth")]
+    models = [x for x in models if (x.endswith(".pth") or x.endswith(".onnx"))]
     if len(models) == 0:
         fr_urls = [
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.3.pth",
@@ -75,7 +79,7 @@ def get_restorers():
             model_path = os.path.join(dir_facerestore_models, model_name)
             download(model_url, model_path, model_name)
         models = glob.glob(models_path)
-        models = [x for x in models if x.endswith(".pth")]
+        models = [x for x in models if (x.endswith(".pth") or x.endswith(".onnx"))]
     return models
 
 def get_model_names(get_models):
@@ -153,12 +157,17 @@ class reactor:
                 codeformer_net.load_state_dict(checkpoint)
                 facerestore_model = codeformer_net.eval()
             
+            elif ".onnx" in face_restore_model:
+
+                ort_session = set_ort_session(model_path, providers=providers)
+                ort_session_inputs = {}
+                facerestore_model = ort_session
+
             else:
 
                 sd = comfy.utils.load_torch_file(model_path, safe_load=True)
                 facerestore_model = model_loading.load_state_dict(sd).eval()
-
-            facerestore_model.to(device)
+                facerestore_model.to(device)
             
             if self.face_helper is None:
                 self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
@@ -186,25 +195,48 @@ class reactor:
                 self.face_helper.align_warp_face()
 
                 restored_face = None
+                
                 for idx, cropped_face in enumerate(self.face_helper.cropped_faces):
-                    cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
-                    normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
-                    cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
+
+                    if ".pth" in face_restore_model:
+                        cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+                        normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+                        cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
                     try:
+                        
                         with torch.no_grad():
-                            output = facerestore_model(cropped_face_t, w=codeformer_weight)[0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
-                            restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
+
+                            if ".onnx" in face_restore_model: # ONNX models
+                                
+                                for ort_session_input in ort_session.get_inputs():
+                                    if ort_session_input.name == "input":
+                                        cropped_face_prep = prepare_cropped_face(cropped_face)
+                                        ort_session_inputs[ort_session_input.name] = cropped_face_prep
+                                    if ort_session_input.name == "weight":
+                                        weight = np.array([ 1 ], dtype = np.double)
+                                        ort_session_inputs[ort_session_input.name] = weight
+                                
+                                output = ort_session.run(None, ort_session_inputs)[0][0]
+                                restored_face = normalize_cropped_face(output)
+
+                            else: # PTH models
+
+                                output = facerestore_model(cropped_face_t, w=codeformer_weight)[0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
+                                restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
+
                         del output
                         torch.cuda.empty_cache()
+                   
                     except Exception as error:
-                        print(f'\tFailed inference for CodeFormer: {error}', file=sys.stderr)
+
+                        print(f"\tFailed inference: {error}", file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
                     
                     if face_restore_visibility < 1:
                         restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
                     
-                    restored_face = restored_face.astype('uint8')
+                    restored_face = restored_face.astype("uint8")
                     self.face_helper.add_restored_face(restored_face)
 
                 self.face_helper.get_inverse_affine(None)
