@@ -1,4 +1,5 @@
 import os, glob, sys
+import logging
 
 import torch
 from torchvision.transforms.functional import normalize
@@ -57,6 +58,7 @@ dir_facerestore_models = os.path.join(models_dir, "facerestore_models")
 os.makedirs(dir_facerestore_models, exist_ok=True)
 folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
 
+BLENDED_FACE_MODEL = None
 
 def get_facemodels():
     models_path = os.path.join(FACE_MODELS_PATH, "*")
@@ -198,10 +200,10 @@ class reactor:
                 
                 for idx, cropped_face in enumerate(self.face_helper.cropped_faces):
 
-                    if ".pth" in face_restore_model:
-                        cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
-                        normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
-                        cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
+                    # if ".pth" in face_restore_model:
+                    cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+                    normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+                    cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
                     try:
                         
@@ -336,12 +338,13 @@ class BuildFaceModel:
             "required": {
                 "images": ("IMAGE",),
                 "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
+                "send_only": ("BOOLEAN", {"default": False, "label_off": "NO", "label_on": "YES"}),
                 "face_model_name": ("STRING", {"default": "default"}),
                 "compute_method": (["Mean", "Median", "Mode"], {"default": "Mean"}),
             }
         }
 
-    RETURN_TYPES = ()
+    RETURN_TYPES = ("FACE_MODEL",)
     FUNCTION = "blend_faces"
 
     OUTPUT_NODE = True
@@ -349,6 +352,7 @@ class BuildFaceModel:
     CATEGORY = "🌌 ReActor"
 
     def build_face_model(self, image: Image.Image, det_size=(640, 640)):
+        logging.StreamHandler.terminator = "\n"
         if image is None:
             error_msg = "Please load an Image"
             logger.error(error_msg)
@@ -357,18 +361,27 @@ class BuildFaceModel:
         face_model = analyze_faces(image, det_size)
 
         if len(face_model) == 0:
+            print("")
             det_size_half = half_det_size(det_size)
             face_model = analyze_faces(image, det_size_half)
+            if face_model is not None and len(face_model) > 0:
+                print("...........................................................", end=" ")
         
         if face_model is not None and len(face_model) > 0:
             return face_model[0]
         else:
             no_face_msg = "No face found, please try another image"
-            logger.error(no_face_msg)
+            # logger.error(no_face_msg)
             return no_face_msg
     
-    def blend_faces(self, images, save_mode, face_model_name, compute_method):
-        if save_mode and images is not None:
+    def blend_faces(self, images, save_mode, send_only, face_model_name, compute_method):
+        global BLENDED_FACE_MODEL
+        blended_face: Face = BLENDED_FACE_MODEL
+
+        if send_only and blended_face is None:
+            send_only = False
+
+        if images is not None and not send_only:
 
             faces = []
             embeddings = []
@@ -377,22 +390,22 @@ class BuildFaceModel:
             apply_logging_patch(1)
 
             n = len(images_list)
-            import logging
 
-            logging.StreamHandler.terminator = " "
             for i,image in enumerate(images_list):
+                logging.StreamHandler.terminator = " "
                 logger.status(f"Building Face Model {i+1} of {n}...")
                 face = self.build_face_model(image)
-                print(f"{int(((i+1)/n)*100)}%")
                 if isinstance(face, str):
-                    # logger.error(f"No faces found in {images_names[i]}, skipping")
+                    logger.error(f"No faces found in image {i+1}, skipping")
                     continue
+                else:
+                    print(f"{int(((i+1)/n)*100)}%")
                 faces.append(face)
                 embeddings.append(face.embedding)
             logging.StreamHandler.terminator = "\n"
             if len(faces) > 0:
-                compute_method_name = "Mean" if compute_method == 0 else "Median" if compute_method == 1 else "Mode"
-                logger.status(f"Blending with Compute Method {compute_method_name}...")
+                # compute_method_name = "Mean" if compute_method == 0 else "Median" if compute_method == 1 else "Mode"
+                logger.status(f"Blending with Compute Method '{compute_method}'...")
                 blended_embedding = np.mean(embeddings, axis=0) if compute_method == "Mean" else np.median(embeddings, axis=0) if compute_method == "Median" else stats.mode(embeddings, axis=0)[0].astype(np.float32)
                 blended_face = Face(
                     bbox=faces[0].bbox,
@@ -406,20 +419,22 @@ class BuildFaceModel:
                     age=faces[0].age
                 )
                 if blended_face is not None:
-                    face_model_path = os.path.join(FACE_MODELS_PATH, face_model_name + ".safetensors")
-                    save_face_model(blended_face,face_model_path)
+                    BLENDED_FACE_MODEL = blended_face
+                    if save_mode:
+                        face_model_path = os.path.join(FACE_MODELS_PATH, face_model_name + ".safetensors")
+                        save_face_model(blended_face,face_model_path)
+                        # done_msg = f"Face model has been saved to '{face_model_path}'"
+                        # logger.status(done_msg)
                     logger.status("--Done!--")
-                    # done_msg = f"Face model has been saved to '{face_model_path}'"
-                    # logger.status(done_msg)
-                    return face_model_name
+                    # return (blended_face,)
                 else:
                     no_face_msg = "Something went wrong, please try another set of images"
                     logger.error(no_face_msg)
-                    return face_model_name
-            logger.status("--Done!--")
+                    # return (blended_face,)
+            # logger.status("--Done!--")
         if images is None:
             logger.error("Please provide `images`")
-        return face_model_name
+        return (blended_face,)
 
 
 class SaveFaceModel:
