@@ -2,7 +2,9 @@ import os
 from PIL import Image
 import numpy as np
 import torch
+from torchvision.utils import make_grid
 import cv2
+import math
 import logging
 import hashlib
 from insightface.app.common import Face

@@ -2,13 +2,18 @@ import os, glob, sys
 import logging
 
 import torch
+import torch.nn.functional as torchfn
 from torchvision.transforms.functional import normalize
+from torchvision.ops import masks_to_boxes
+
 import numpy as np
 import cv2
+import math
 from typing import List
 from PIL import Image
 from scipy import stats
 from insightface.app.common import Face
+from segment_anything import sam_model_registry
 
 from modules.processing import StableDiffusionProcessingImg2Img
 from comfy_extras.chainner_models import model_loading
@@ -43,6 +48,9 @@ from reactor_log_patch import apply_logging_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
 from r_basicsr.utils.registry import ARCH_REGISTRY
 import scripts.r_archs.codeformer_arch
+import scripts.r_masking.subcore as subcore
+import scripts.r_masking.core as core
+import scripts.r_masking.segs as masking_segs
 
 
 models_dir = folder_paths.models_dir
@@ -328,6 +336,7 @@ class LoadFaceModel:
             out = None
         return (out, )
 
+
 class BuildFaceModel:
     def __init__(self):
         self.output_dir = FACE_MODELS_PATH
@@ -511,12 +520,367 @@ class RestoreFace:
         return (result,)
 
 
+class MaskFace:
+    def __init__(self):
+        # self.threshold = 0.5
+        # self.dilation = 10
+        # self.crop_factor = 3.0
+        # self.drop_size = 1
+        self.labels = "all"
+        self.detailer_hook = None
+        self.device_mode = "AUTO"
+        self.detection_hint = "center-1"
+        # self.sam_dilation = 0
+        # self.sam_threshold = 0.93
+        # self.bbox_expansion = 0
+        # self.mask_hint_threshold = 0.7
+        # self.mask_hint_use_negative = "False"
+        # self.force_resize_width = 0
+        # self.force_resize_height = 0
+        # self.resize_behavior = "source_size"
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        bboxs = ["bbox/"+x for x in folder_paths.get_filename_list("ultralytics_bbox")]
+        sam_models = [x for x in folder_paths.get_filename_list("sams") if 'hq' not in x]
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "swapped_image": ("IMAGE",),
+                "bbox_model_name": (bboxs, ),
+                "bbox_threshold": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "bbox_dilation": ("INT", {"default": 10, "min": -512, "max": 512, "step": 1}),
+                "bbox_crop_factor": ("FLOAT", {"default": 3.0, "min": 1.0, "max": 100, "step": 0.1}),
+                "bbox_drop_size": ("INT", {"min": 1, "max": 8192, "step": 1, "default": 10}),
+                "sam_model_name": (sam_models, ),
+                "sam_dilation": ("INT", {"default": 0, "min": -512, "max": 512, "step": 1}),
+                "sam_threshold": ("FLOAT", {"default": 0.93, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "bbox_expansion": ("INT", {"default": 0, "min": 0, "max": 1000, "step": 1}),
+                "mask_hint_threshold": ("FLOAT", {"default": 0.7, "min": 0.0, "max": 1.0, "step": 0.01}),
+                "mask_hint_use_negative": (["False", "Small", "Outter"], ),
+                "morphology_operation": (["dilate", "erode", "open", "close"],),
+                "morphology_distance": ("INT", {"default": 0, "min": 0, "max": 128, "step": 1}),
+                "blur_radius": ("INT", {"default": 9, "min": 0, "max": 48, "step": 1}),
+                "sigma_factor": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 3., "step": 0.01}),
+            },
+            "optional": {
+                "mask_optional": ("MASK",),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE","MASK","IMAGE")
+    RETURN_NAMES = ("IMAGE","MASK","MASK_PREVIEW")
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self, image, swapped_image, bbox_model_name, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, sam_model_name, sam_dilation, sam_threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative, morphology_operation, morphology_distance, blur_radius, sigma_factor, mask_optional=None):
+
+        # images = [image[i:i + 1, ...] for i in range(image.shape[0])]
+
+        images = image
+
+        if mask_optional is None:
+
+            bbox_model_path = folder_paths.get_full_path("ultralytics", bbox_model_name)
+            bbox_model = subcore.load_yolo(bbox_model_path)
+            bbox_detector = subcore.UltraBBoxDetector(bbox_model)
+
+            segs = bbox_detector.detect(images, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, self.detailer_hook)
+
+            if isinstance(self.labels, list):
+                self.labels = str(self.labels[0])
+
+            if self.labels is not None and self.labels != '':
+                self.labels = self.labels.split(',')
+                if len(self.labels) > 0:
+                    segs, _ = masking_segs.filter(segs, self.labels)
+            # segs, _ = masking_segs.filter(segs, "all")
+            
+            sam_modelname = folder_paths.get_full_path("sams", sam_model_name)
+
+            if 'vit_h' in sam_model_name:
+                model_kind = 'vit_h'
+            elif 'vit_l' in sam_model_name:
+                model_kind = 'vit_l'
+            else:
+                model_kind = 'vit_b'
+
+            sam = sam_model_registry[model_kind](checkpoint=sam_modelname)
+            size = os.path.getsize(sam_modelname)
+            sam.safe_to = core.SafeToGPU(size)
+
+            device = model_management.get_torch_device()
+
+            sam.safe_to.to_device(sam, device)
+
+            sam.is_auto_mode = self.device_mode == "AUTO"
+
+            combined_mask, _ = core.make_sam_mask_segmented(sam, segs, images, self.detection_hint, sam_dilation, sam_threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative)
+        
+        else:
+            combined_mask = mask_optional
+
+        # *** MASK TO IMAGE ***:
+        
+        mask_image = combined_mask.reshape((-1, 1, combined_mask.shape[-2], combined_mask.shape[-1])).movedim(1, -1).expand(-1, -1, -1, 3)
+
+        # *** MASK MORPH ***:
+
+        mask_image = core.tensor2mask(mask_image)
+
+        if morphology_operation == "dilate":
+            mask_image = self.dilate(mask_image, morphology_distance)
+        elif morphology_operation == "erode":
+            mask_image = self.erode(mask_image, morphology_distance)
+        elif morphology_operation == "open":
+            mask_image = self.erode(mask_image, morphology_distance)
+            mask_image = self.dilate(mask_image, morphology_distance)
+        elif morphology_operation == "close":
+            mask_image = self.dilate(mask_image, morphology_distance)
+            mask_image = self.erode(mask_image, morphology_distance)
+        
+        # *** MASK BLUR ***:
+        
+        if len(mask_image.size()) == 3:
+            mask_image = mask_image.unsqueeze(3)
+        
+        mask_image = mask_image.permute(0, 3, 1, 2)
+        kernel_size = blur_radius * 2 + 1
+        sigma = sigma_factor * (0.6 * blur_radius - 0.3)
+        mask_image_final = self.gaussian_blur(mask_image, kernel_size, sigma).permute(0, 2, 3, 1)
+        if mask_image_final.size()[3] == 1:
+            mask_image_final = mask_image_final[:, :, :, 0]
+
+        # *** CUT BY MASK ***:
+        
+        if len(swapped_image.shape) < 4:
+            C = 1
+        else:
+            C = swapped_image.shape[3]
+
+        # We operate on RGBA to keep the code clean and then convert back after
+        swapped_image = core.tensor2rgba(swapped_image)
+        mask = core.tensor2mask(mask_image_final)
+
+        # Scale the mask to be a matching size if it isn't
+        B, H, W, _ = swapped_image.shape
+        mask = torch.nn.functional.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
+        MB, _, _ = mask.shape
+
+        if MB < B:
+            assert(B % MB == 0)
+            mask = mask.repeat(B // MB, 1, 1)
+
+        # masks_to_boxes errors if the tensor is all zeros, so we'll add a single pixel and zero it out at the end
+        is_empty = ~torch.gt(torch.max(torch.reshape(mask,[MB, H * W]), dim=1).values, 0.)
+        mask[is_empty,0,0] = 1.
+        boxes = masks_to_boxes(mask)
+        mask[is_empty,0,0] = 0.
+
+        min_x = boxes[:,0]
+        min_y = boxes[:,1]
+        max_x = boxes[:,2]
+        max_y = boxes[:,3]
+
+        width = max_x - min_x + 1
+        height = max_y - min_y + 1
+
+        use_width = int(torch.max(width).item())
+        use_height = int(torch.max(height).item())
+
+        # if self.force_resize_width > 0:
+        #     use_width = self.force_resize_width
+
+        # if self.force_resize_height > 0:
+        #     use_height = self.force_resize_height
+
+        alpha_mask = torch.ones((B, H, W, 4))
+        alpha_mask[:,:,:,3] = mask
+
+        swapped_image = swapped_image * alpha_mask
+
+        cutted_image = torch.zeros((B, use_height, use_width, 4))
+        for i in range(0, B):
+            if not is_empty[i]:
+                ymin = int(min_y[i].item())
+                ymax = int(max_y[i].item())
+                xmin = int(min_x[i].item())
+                xmax = int(max_x[i].item())
+                single = (swapped_image[i, ymin:ymax+1, xmin:xmax+1,:]).unsqueeze(0)
+                resized = torch.nn.functional.interpolate(single.permute(0, 3, 1, 2), size=(use_height, use_width), mode='bicubic').permute(0, 2, 3, 1)
+                cutted_image[i] = resized[0]
+        
+        # Preserve our type unless we were previously RGB and added non-opaque alpha due to the mask size
+        if C == 1:
+            cutted_image = core.tensor2mask(cutted_image)
+        elif C == 3 and torch.min(cutted_image[:,:,:,3]) == 1:
+            cutted_image = core.tensor2rgb(cutted_image)
+
+        # *** PASTE BY MASK ***:
+
+        image_base = core.tensor2rgba(images)
+        image_to_paste = core.tensor2rgba(cutted_image)
+        mask = core.tensor2mask(mask_image_final)
+
+        # Scale the mask to be a matching size if it isn't
+        B, H, W, C = image_base.shape
+        MB = mask.shape[0]
+        PB = image_to_paste.shape[0]
+
+        if B < PB:
+            assert(PB % B == 0)
+            image_base = image_base.repeat(PB // B, 1, 1, 1)
+        B, H, W, C = image_base.shape
+        if MB < B:
+            assert(B % MB == 0)
+            mask = mask.repeat(B // MB, 1, 1)
+        elif B < MB:
+            assert(MB % B == 0)
+            image_base = image_base.repeat(MB // B, 1, 1, 1)
+        if PB < B:
+            assert(B % PB == 0)
+            image_to_paste = image_to_paste.repeat(B // PB, 1, 1, 1)
+
+        mask = torch.nn.functional.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
+        MB, MH, MW = mask.shape
+
+        # masks_to_boxes errors if the tensor is all zeros, so we'll add a single pixel and zero it out at the end
+        is_empty = ~torch.gt(torch.max(torch.reshape(mask,[MB, MH * MW]), dim=1).values, 0.)
+        mask[is_empty,0,0] = 1.
+        boxes = masks_to_boxes(mask)
+        mask[is_empty,0,0] = 0.
+
+        min_x = boxes[:,0]
+        min_y = boxes[:,1]
+        max_x = boxes[:,2]
+        max_y = boxes[:,3]
+        mid_x = (min_x + max_x) / 2
+        mid_y = (min_y + max_y) / 2
+
+        target_width = max_x - min_x + 1
+        target_height = max_y - min_y + 1
+
+        result = image_base.detach().clone()
+        for i in range(0, MB):
+            if is_empty[i]:
+                continue
+            else:
+                image_index = i
+                source_size = image_to_paste.size()
+                SB, SH, SW, _ = image_to_paste.shape
+
+                # Figure out the desired size
+                width = int(target_width[i].item())
+                height = int(target_height[i].item())
+                # if self.resize_behavior == "keep_ratio_fill":
+                #     target_ratio = width / height
+                #     actual_ratio = SW / SH
+                #     if actual_ratio > target_ratio:
+                #         width = int(height * actual_ratio)
+                #     elif actual_ratio < target_ratio:
+                #         height = int(width / actual_ratio)
+                # elif self.resize_behavior == "keep_ratio_fit":
+                #     target_ratio = width / height
+                #     actual_ratio = SW / SH
+                #     if actual_ratio > target_ratio:
+                #         height = int(width / actual_ratio)
+                #     elif actual_ratio < target_ratio:
+                #         width = int(height * actual_ratio)
+                # elif self.resize_behavior == "source_size" or self.resize_behavior == "source_size_unmasked":
+
+                width = SW
+                height = SH
+
+                # Resize the image we're pasting if needed
+                resized_image = image_to_paste[i].unsqueeze(0)
+                # if SH != height or SW != width:
+                #     resized_image = torch.nn.functional.interpolate(resized_image.permute(0, 3, 1, 2), size=(height,width), mode='bicubic').permute(0, 2, 3, 1)
+
+                pasting = torch.ones([H, W, C])
+                ymid = float(mid_y[i].item())
+                ymin = int(math.floor(ymid - height / 2)) + 1
+                ymax = int(math.floor(ymid + height / 2)) + 1
+                xmid = float(mid_x[i].item())
+                xmin = int(math.floor(xmid - width / 2)) + 1
+                xmax = int(math.floor(xmid + width / 2)) + 1
+
+                _, source_ymax, source_xmax, _ = resized_image.shape
+                source_ymin, source_xmin = 0, 0
+
+                if xmin < 0:
+                    source_xmin = abs(xmin)
+                    xmin = 0
+                if ymin < 0:
+                    source_ymin = abs(ymin)
+                    ymin = 0
+                if xmax > W:
+                    source_xmax -= (xmax - W)
+                    xmax = W
+                if ymax > H:
+                    source_ymax -= (ymax - H)
+                    ymax = H
+
+                pasting[ymin:ymax, xmin:xmax, :] = resized_image[0, source_ymin:source_ymax, source_xmin:source_xmax, :]
+                pasting[:, :, 3] = 1.
+
+                pasting_alpha = torch.zeros([H, W])
+                pasting_alpha[ymin:ymax, xmin:xmax] = resized_image[0, source_ymin:source_ymax, source_xmin:source_xmax, 3]
+
+                # if self.resize_behavior == "keep_ratio_fill" or self.resize_behavior == "source_size_unmasked":
+                #     # If we explicitly want to fill the area, we are ok with extending outside
+                #     paste_mask = pasting_alpha.unsqueeze(2).repeat(1, 1, 4)
+                # else:
+                #     paste_mask = torch.min(pasting_alpha, mask[i]).unsqueeze(2).repeat(1, 1, 4)
+                paste_mask = torch.min(pasting_alpha, mask[i]).unsqueeze(2).repeat(1, 1, 4)
+                result[image_index] = pasting * paste_mask + result[image_index] * (1. - paste_mask)
+        
+        return (result,combined_mask,mask_image_final,)
+
+    def gaussian_blur(self, image, kernel_size, sigma):
+        kernel = torch.Tensor(kernel_size, kernel_size).to(device=image.device)
+        center = kernel_size // 2
+        variance = sigma**2
+        for i in range(kernel_size):
+            for j in range(kernel_size):
+                x = i - center
+                y = j - center
+                kernel[i, j] = math.exp(-(x**2 + y**2)/(2*variance))
+        kernel /= kernel.sum()
+
+        # Pad the input tensor
+        padding = (kernel_size - 1) // 2
+        input_pad = torch.nn.functional.pad(image, (padding, padding, padding, padding), mode='reflect')
+
+        # Reshape the padded input tensor for batched convolution
+        batch_size, num_channels, height, width = image.shape
+        input_reshaped = input_pad.reshape(batch_size*num_channels, 1, height+padding*2, width+padding*2)
+
+        # Perform batched convolution with the Gaussian kernel
+        output_reshaped = torch.nn.functional.conv2d(input_reshaped, kernel.unsqueeze(0).unsqueeze(0))
+
+        # Reshape the output tensor to its original shape
+        output_tensor = output_reshaped.reshape(batch_size, num_channels, height, width)
+
+        return output_tensor
+    
+    def erode(self, image, distance):
+        return 1. - self.dilate(1. - image, distance)
+
+    def dilate(self, image, distance):
+        kernel_size = 1 + distance * 2
+        # Add the channels dimension
+        image = image.unsqueeze(1)
+        out = torchfn.max_pool2d(image, kernel_size=kernel_size, stride=1, padding=kernel_size // 2).squeeze(1)
+        return out
+
+
 NODE_CLASS_MAPPINGS = {
     "ReActorFaceSwap": reactor,
     "ReActorLoadFaceModel": LoadFaceModel,
     "ReActorSaveFaceModel": SaveFaceModel,
     "ReActorRestoreFace": RestoreFace,
     "ReActorBuildFaceModel": BuildFaceModel,
+    "ReActorMaskFace": MaskFace,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -525,4 +889,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorSaveFaceModel": "Save Face Model",
     "ReActorRestoreFace": "Restore Face",
     "ReActorBuildFaceModel": "Build Blended Face Model",
+    "ReActorMaskFace": "ReActor Face Masking Helper"
 }
