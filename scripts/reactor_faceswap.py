@@ -55,10 +55,10 @@ class FaceSwapScript(scripts.Script):
             self.model = model
             self.face_model = face_model
             self.source_faces_index = [
-                int(x) for x in source_faces_index.strip(",").split(",") if x.isnumeric()
+                int(x) for x in source_faces_index.strip(",").split(",") if x.strip("-").isnumeric()
             ]
             self.faces_index = [
-                int(x) for x in faces_index.strip(",").split(",") if x.isnumeric()
+                int(x) for x in faces_index.strip(",").split(",") if x.strip("-").isnumeric()
             ]
             if len(self.source_faces_index) == 0:
                 self.source_faces_index = [0]
