@@ -60,6 +60,8 @@ SOURCE_FACES = None
 SOURCE_IMAGE_HASH = None
 TARGET_FACES = None
 TARGET_IMAGE_HASH = None
+TARGET_FACES_LIST = []
+TARGET_IMAGE_LIST_HASH = []
 
 def get_current_faces_model():
     global SOURCE_FACES
@@ -312,7 +314,7 @@ def swap_face_many(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
 ):
-    global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
+    global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
 
     if model is not None:
@@ -374,8 +376,41 @@ def swap_face_many(
                 if state.interrupted or model_management.processing_interrupted():
                     logger.status("Interrupted by User")
                     break
-                logger.status(f"Analyzing Target Image {i}...")
-                target_face = analyze_faces(target_img)
+                
+                target_image_md5hash = get_image_md5hash(target_img)
+                if len(TARGET_IMAGE_LIST_HASH) == 0:
+                    TARGET_IMAGE_LIST_HASH = [target_image_md5hash]
+                    target_image_same = False
+                elif len(TARGET_IMAGE_LIST_HASH) == i:
+                    TARGET_IMAGE_LIST_HASH.append(target_image_md5hash)
+                    target_image_same = False
+                else:
+                    target_image_same = True if TARGET_IMAGE_LIST_HASH[i] == target_image_md5hash else False
+                    if not target_image_same:
+                        TARGET_IMAGE_LIST_HASH[i] = target_image_md5hash
+                
+                logger.info("(Image %s) Target Image MD5 Hash = %s", i, TARGET_IMAGE_LIST_HASH[i])
+                logger.info("(Image %s) Target Image the Same? %s", i, target_image_same)
+
+                if len(TARGET_FACES_LIST) == 0:
+                    logger.status(f"Analyzing Target Image {i}...")
+                    target_face = analyze_faces(target_img)
+                    TARGET_FACES_LIST = [target_face]
+                elif len(TARGET_FACES_LIST) == i and not target_image_same:
+                    logger.status(f"Analyzing Target Image {i}...")
+                    target_face = analyze_faces(target_img)
+                    TARGET_FACES_LIST.append(target_face)
+                elif len(TARGET_FACES_LIST) != i and not target_image_same:
+                    logger.status(f"Analyzing Target Image {i}...")
+                    target_face = analyze_faces(target_img)
+                    TARGET_FACES_LIST[i] = target_face
+                elif target_image_same:
+                    logger.status("(Image %s) Using Hashed Target Face(s) Model...", i)
+                    target_face = TARGET_FACES_LIST[i]
+                
+
+                # logger.status(f"Analyzing Target Image {i}...")
+                # target_face = analyze_faces(target_img)
                 if target_face is not None:
                     target_faces.append(target_face)
 
