@@ -86,11 +86,28 @@ def getFaceSwapModel(model_path: str):
     return FS_MODEL
 
 
+def sort_by_order(face, order: str):
+    if order == "left-right":
+        return sorted(face, key=lambda x: x.bbox[0])
+    if order == "right-left":
+        return sorted(face, key=lambda x: x.bbox[0], reverse = True)
+    if order == "top-bottom":
+        return sorted(face, key=lambda x: x.bbox[1])
+    if order == "bottom-top":
+        return sorted(face, key=lambda x: x.bbox[1], reverse = True)
+    if order == "small-large":
+        return sorted(face, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]))
+    # if order == "large-small":
+    #     return sorted(face, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)
+    # by default "large-small":
+    return sorted(face, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)
+
 def get_face_gender(
         face,
         face_index,
         gender_condition,
-        operated: str
+        operated: str,
+        order: str,
 ):
     gender = [
         x.sex
@@ -106,13 +123,16 @@ def get_face_gender(
     if (gender_condition == 1 and face_gender == "F") or (gender_condition == 2 and face_gender == "M"):
         logger.status("OK - Detected Gender matches Condition")
         try:
-            return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
+            faces_sorted = sort_by_order(face, order)
+            return faces_sorted[face_index], 0
+            # return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
         except IndexError:
             return None, 0
     else:
         logger.status("WRONG - Detected Gender doesn't match Condition")
-        return sorted(face, key=lambda x: x.bbox[0])[face_index], 1
-
+        faces_sorted = sort_by_order(face, order)
+        return faces_sorted[face_index], 1
+        # return sorted(face, key=lambda x: x.bbox[0])[face_index], 1
 
 def half_det_size(det_size):
     logger.status("Trying to halve 'det_size' parameter")
@@ -123,7 +143,7 @@ def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
     face_analyser.prepare(ctx_id=0, det_size=det_size)
     return face_analyser.get(img_data)
 
-def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0):
+def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small"):
 
     buffalo_path = os.path.join(insightface_models_path, "buffalo_l.zip")
     if os.path.exists(buffalo_path):
@@ -132,21 +152,23 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
     if gender_source != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
             det_size_half = half_det_size(det_size)
-            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
-        return get_face_gender(face,face_index,gender_source,"Source")
+            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
+        return get_face_gender(face,face_index,gender_source,"Source", order)
 
     if gender_target != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
             det_size_half = half_det_size(det_size)
-            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
-        return get_face_gender(face,face_index,gender_target,"Target")
+            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
+        return get_face_gender(face,face_index,gender_target,"Target", order)
     
     if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
         det_size_half = half_det_size(det_size)
-        return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target)
+        return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
 
     try:
-        return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
+        faces_sorted = sort_by_order(face, order)
+        return faces_sorted[face_index], 0
+        # return sorted(face, key=lambda x: x.bbox[0])[face_index], 0
     except IndexError:
         return None, 0
 
@@ -160,6 +182,7 @@ def swap_face(
     gender_source: int = 0,
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
+    faces_order: str = "large-small",
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
     result_image = target_img
@@ -246,9 +269,10 @@ def swap_face(
 
             if source_img is not None:
                 # separated management of wrong_gender between source and target, enhancement
-                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order)
             else:
-                source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                # source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                source_face = sorted(source_faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)[source_faces_index[0]]
                 src_wrong_gender = 0
 
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
@@ -267,11 +291,11 @@ def swap_face(
                         break
 
                     if len(source_faces_index) > 1 and source_face_idx > 0:
-                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
+                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source, order=faces_order)
                     source_face_idx += 1
 
                     if source_face is not None and src_wrong_gender == 0:
-                        target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target)
+                        target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target, order=faces_order)
                         if target_face is not None and wrong_gender == 0:
                             logger.status(f"Swapping...")
                             result = face_swapper.get(result, target_face, source_face)
@@ -313,6 +337,7 @@ def swap_face_many(
     gender_source: int = 0,
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
+    faces_order: str = "large-small",
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
@@ -421,9 +446,10 @@ def swap_face_many(
 
             if source_img is not None:
                 # separated management of wrong_gender between source and target, enhancement
-                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order)
             else:
-                source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                # source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                source_face = sorted(source_faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)[source_faces_index[0]]
                 src_wrong_gender = 0
 
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
@@ -443,12 +469,12 @@ def swap_face_many(
                         break
 
                     if len(source_faces_index) > 1 and source_face_idx > 0:
-                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
+                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source, order=faces_order)
                     source_face_idx += 1
 
                     if source_face is not None and src_wrong_gender == 0:
                         for i, (target_img, target_face) in enumerate(zip(target_imgs, target_faces)):
-                            target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target)
+                            target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target, order=faces_order)
                             if target_face_single is not None and wrong_gender == 0:
                                 logger.status(f"Swapping {i}...")
                                 result = face_swapper.get(target_img, target_face_single, source_face)

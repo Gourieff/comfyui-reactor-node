@@ -45,6 +45,7 @@ class FaceSwapScript(scripts.Script):
         gender_source,
         gender_target,
         face_model,
+        faces_order,
     ):
         self.enable = enable
         if self.enable:
@@ -55,6 +56,7 @@ class FaceSwapScript(scripts.Script):
             self.gender_target = gender_target
             self.model = model
             self.face_model = face_model
+            self.faces_order = faces_order
             self.source_faces_index = [
                 int(x) for x in source_faces_index.strip(",").split(",") if x.isnumeric()
             ]
@@ -95,6 +97,7 @@ class FaceSwapScript(scripts.Script):
                         gender_source=self.gender_source,
                         gender_target=self.gender_target,
                         face_model=self.face_model,
+                        faces_order=self.faces_order,
                     )
                     p.init_images[0] = result
 
@@ -126,6 +129,7 @@ class FaceSwapScript(scripts.Script):
                         gender_source=self.gender_source,
                         gender_target=self.gender_target,
                         face_model=self.face_model,
+                        faces_order=self.faces_order,
                     )
                     p.init_images = result
 

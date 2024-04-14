@@ -121,11 +121,11 @@ class reactor:
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "input_faces_index": ("STRING", {"default": "0"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
-                "console_log_level": ([0, 1, 2], {"default": 1}),
             },
             "optional": {
                 "source_image": ("IMAGE",),
                 "face_model": ("FACE_MODEL",),
+                "options": ("OPTIONS",),
             }
         }
 
@@ -135,6 +135,8 @@ class reactor:
 
     def __init__(self):
         self.face_helper = None
+        self.faces_order = "large-small"
+        self.console_log_level = 1
 
     def restore_face(
             self,
@@ -273,8 +275,13 @@ class reactor:
 
         return result
     
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None):
-        apply_logging_patch(console_log_level)
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, options=None):
+
+        if options is not None:
+            self.faces_order = options["faces_order"]
+            self.console_log_level = options["console_log_level"]
+
+        apply_logging_patch(self.console_log_level)
 
         if not enabled:
             return (input_image,face_model)
@@ -304,6 +311,7 @@ class reactor:
             gender_source=detect_gender_source,
             gender_target=detect_gender_input,
             face_model=face_model,
+            faces_order=self.faces_order,
         )
         result = batched_pil_to_tensor(p.init_images)
 
@@ -901,6 +909,30 @@ class ImageDublicator:
         return (images,)
 
 
+class ReActorOptions:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "faces_order": (
+                    ["left-right","right-left","top-bottom","bottom-top","small-large","large-small"], {"default": "large-small"}
+                ),
+                "console_log_level": ([0, 1, 2], {"default": 1}),
+            }
+        }
+
+    RETURN_TYPES = ("OPTIONS",)
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self,faces_order,console_log_level):
+        options: dict = {
+            "faces_order": faces_order,
+            "console_log_level": console_log_level,
+        }
+        return (options, )
+
+
 NODE_CLASS_MAPPINGS = {
     "ReActorFaceSwap": reactor,
     "ReActorLoadFaceModel": LoadFaceModel,
@@ -909,6 +941,7 @@ NODE_CLASS_MAPPINGS = {
     "ReActorBuildFaceModel": BuildFaceModel,
     "ReActorMaskHelper": MaskHelper,
     "ReActorImageDublicator": ImageDublicator,
+    "ReActorOptions": ReActorOptions,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -919,4 +952,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorBuildFaceModel": "Build Blended Face Model",
     "ReActorMaskHelper": "ReActor Masking Helper",
     "ReActorImageDublicator": "ReActor Image Dublicator (List)",
+    "ReActorOptions": "ReActor Options"
 }
