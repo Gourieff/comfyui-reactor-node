@@ -18,6 +18,8 @@ except:
 from scripts.reactor_logger import logger
 from reactor_utils import move_path, get_image_md5hash
 import folder_paths
+import comfy.model_management as model_management
+from modules.shared import state
 
 import warnings
 
@@ -299,3 +301,140 @@ def swap_face(
         else:
             logger.status("No source face(s) found")
     return result_image
+
+def swap_face_many(
+    source_img: Union[Image.Image, None],
+    target_imgs: List[Image.Image],
+    model: Union[str, None] = None,
+    source_faces_index: List[int] = [0],
+    faces_index: List[int] = [0],
+    gender_source: int = 0,
+    gender_target: int = 0,
+    face_model: Union[Face, None] = None,
+):
+    global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
+    result_images = target_imgs
+
+    if model is not None:
+
+        if isinstance(source_img, str):  # source_img is a base64 string
+            import base64, io
+            if 'base64,' in source_img:  # check if the base64 string has a data URL scheme
+                # split the base64 string to get the actual base64 encoded image data
+                base64_data = source_img.split('base64,')[-1]
+                # decode base64 string to bytes
+                img_bytes = base64.b64decode(base64_data)
+            else:
+                # if no data URL scheme, just decode
+                img_bytes = base64.b64decode(source_img)
+            
+            source_img = Image.open(io.BytesIO(img_bytes))
+            
+        target_imgs = [cv2.cvtColor(np.array(target_img), cv2.COLOR_RGB2BGR) for target_img in target_imgs]
+
+        if source_img is not None:
+
+            source_img = cv2.cvtColor(np.array(source_img), cv2.COLOR_RGB2BGR)
+
+            source_image_md5hash = get_image_md5hash(source_img)
+
+            if SOURCE_IMAGE_HASH is None:
+                SOURCE_IMAGE_HASH = source_image_md5hash
+                source_image_same = False
+            else:
+                source_image_same = True if SOURCE_IMAGE_HASH == source_image_md5hash else False
+                if not source_image_same:
+                    SOURCE_IMAGE_HASH = source_image_md5hash
+
+            logger.info("Source Image MD5 Hash = %s", SOURCE_IMAGE_HASH)
+            logger.info("Source Image the Same? %s", source_image_same)
+
+            if SOURCE_FACES is None or not source_image_same:
+                logger.status("Analyzing Source Image...")
+                source_faces = analyze_faces(source_img)
+                SOURCE_FACES = source_faces
+            elif source_image_same:
+                logger.status("Using Hashed Source Face(s) Model...")
+                source_faces = SOURCE_FACES
+
+        elif face_model is not None:
+
+            source_faces_index = [0]
+            logger.status("Using Loaded Source Face Model...")
+            source_face_model = [face_model]
+            source_faces = source_face_model
+
+        else:
+            logger.error("Cannot detect any Source")
+
+        if source_faces is not None:
+
+            target_faces = []
+            for i, target_img in enumerate(target_imgs):
+                if state.interrupted or model_management.processing_interrupted():
+                    logger.status("Interrupted by User")
+                    break
+                logger.status(f"Analyzing Target Image {i}...")
+                target_face = analyze_faces(target_img)
+                if target_face is not None:
+                    target_faces.append(target_face)
+
+            # No use in trying to swap faces if no faces are found, enhancement
+            if len(target_faces) == 0:
+                logger.status("Cannot detect any Target, skipping swapping...")
+                return result_images
+
+            if source_img is not None:
+                # separated management of wrong_gender between source and target, enhancement
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source)
+            else:
+                source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
+                src_wrong_gender = 0
+
+            if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
+                logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
+            elif source_face is not None:
+                results = []
+                # results = target_imgs
+                model_path = model_path = os.path.join(insightface_path, model)
+                face_swapper = getFaceSwapModel(model_path)
+
+                source_face_idx = 0
+
+                for face_num in faces_index:
+                    # No use in trying to swap faces if no further faces are found, enhancement
+                    if face_num >= len(target_faces):
+                        logger.status("Checked all existing target faces, skipping swapping...")
+                        break
+
+                    if len(source_faces_index) > 1 and source_face_idx > 0:
+                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source)
+                    source_face_idx += 1
+
+                    if source_face is not None and src_wrong_gender == 0:
+                        for i, (target_img, target_face) in enumerate(zip(target_imgs, target_faces)):
+                            target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target)
+                            if target_face_single is not None and wrong_gender == 0:
+                                logger.status(f"Swapping {i}...")
+                                result = face_swapper.get(target_img, target_face_single, source_face)
+                                results.append(result)
+                            elif wrong_gender == 1:
+                                wrong_gender = 0
+                                logger.status("Wrong target gender detected")
+                                continue
+                            else:
+                                logger.status(f"No target face found for {face_num}")
+                    elif src_wrong_gender == 1:
+                        src_wrong_gender = 0
+                        logger.status("Wrong source gender detected")
+                        continue
+                    else:
+                        logger.status(f"No source face found for face number {source_face_idx}.")
+
+                result_images = [Image.fromarray(cv2.cvtColor(result, cv2.COLOR_BGR2RGB)) for result in results]
+
+            else:
+                logger.status("No source face(s) in the provided Index")
+        else:
+            logger.status("No source face(s) found")
+    return result_images

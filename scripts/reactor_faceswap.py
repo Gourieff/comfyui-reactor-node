@@ -13,6 +13,7 @@ from modules.shared import state
 from scripts.reactor_logger import logger
 from scripts.reactor_swapper import (
     swap_face,
+    swap_face_many,
     get_current_faces_model,
     analyze_faces,
     half_det_size,
@@ -83,15 +84,11 @@ class FaceSwapScript(scripts.Script):
             if isinstance(p, StableDiffusionProcessingImg2Img) and swap_in_source:
                 logger.status(f"Working: source face index %s, target face index %s", self.source_faces_index, self.faces_index)
 
-                for i in range(len(p.init_images)):
-                    if state.interrupted or model_management.processing_interrupted():
-                        logger.status("Interrupted by User")
-                        break
-                    if len(p.init_images) > 1:
-                        logger.status(f"Swap in %s", i)
+                if len(p.init_images) == 1:
+
                     result = swap_face(
                         self.source,
-                        p.init_images[i],
+                        p.init_images[0],
                         source_faces_index=self.source_faces_index,
                         faces_index=self.faces_index,
                         model=self.model,
@@ -99,7 +96,39 @@ class FaceSwapScript(scripts.Script):
                         gender_target=self.gender_target,
                         face_model=self.face_model,
                     )
-                    p.init_images[i] = result
+                    p.init_images[0] = result
+
+                    # for i in range(len(p.init_images)):
+                    #     if state.interrupted or model_management.processing_interrupted():
+                    #         logger.status("Interrupted by User")
+                    #         break
+                    #     if len(p.init_images) > 1:
+                    #         logger.status(f"Swap in %s", i)
+                    #     result = swap_face(
+                    #         self.source,
+                    #         p.init_images[i],
+                    #         source_faces_index=self.source_faces_index,
+                    #         faces_index=self.faces_index,
+                    #         model=self.model,
+                    #         gender_source=self.gender_source,
+                    #         gender_target=self.gender_target,
+                    #         face_model=self.face_model,
+                    #     )
+                    #     p.init_images[i] = result
+
+                elif len(p.init_images) > 1:
+                    result = swap_face_many(
+                        self.source,
+                        p.init_images,
+                        source_faces_index=self.source_faces_index,
+                        faces_index=self.faces_index,
+                        model=self.model,
+                        gender_source=self.gender_source,
+                        gender_target=self.gender_target,
+                        face_model=self.face_model,
+                    )
+                    p.init_images = result
+
                 logger.status("--Done!--")
             # else:
             #     logger.error(f"Please provide a source face")
