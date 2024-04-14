@@ -121,12 +121,13 @@ class reactor:
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "input_faces_index": ("STRING", {"default": "0"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
+                "console_log_level": ([0, 1, 2], {"default": 1}),
             },
             "optional": {
                 "source_image": ("IMAGE",),
                 "face_model": ("FACE_MODEL",),
-                "options": ("OPTIONS",),
-            }
+            },
+            "hidden": {"faces_order": "FACES_ORDER"},
         }
 
     RETURN_TYPES = ("IMAGE","FACE_MODEL")
@@ -135,8 +136,7 @@ class reactor:
 
     def __init__(self):
         self.face_helper = None
-        self.faces_order = "large-small"
-        self.console_log_level = 1
+        self.faces_order = ["large-small", "large-small"]
 
     def restore_face(
             self,
@@ -275,13 +275,12 @@ class reactor:
 
         return result
     
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, options=None):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None):
 
-        if options is not None:
-            self.faces_order = options["faces_order"]
-            self.console_log_level = options["console_log_level"]
+        if faces_order is None:
+            faces_order = self.faces_order
 
-        apply_logging_patch(self.console_log_level)
+        apply_logging_patch(console_log_level)
 
         if not enabled:
             return (input_image,face_model)
@@ -311,7 +310,7 @@ class reactor:
             gender_source=detect_gender_source,
             gender_target=detect_gender_input,
             face_model=face_model,
-            faces_order=self.faces_order,
+            faces_order=faces_order,
         )
         result = batched_pil_to_tensor(p.init_images)
 
@@ -324,6 +323,56 @@ class reactor:
         result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection)
 
         return (result,face_model_to_provide)
+
+
+class ReActorPlusOpt:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
+                "input_image": ("IMAGE",),               
+                "swap_model": (list(model_names().keys()),),
+                "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
+                "face_restore_model": (get_model_names(get_restorers),),
+                "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.1, "max": 1, "step": 0.05}),
+                "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
+            },
+            "optional": {
+                "source_image": ("IMAGE",),
+                "face_model": ("FACE_MODEL",),
+                "options": ("OPTIONS",),
+            }
+        }
+
+    RETURN_TYPES = ("IMAGE","FACE_MODEL")
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def __init__(self):
+        self.face_helper = None
+        self.faces_order = ["large-small", "large-small"]
+        self.detect_gender_input = "no"
+        self.detect_gender_source = "no"
+        self.input_faces_index = "0"
+        self.source_faces_index = "0"
+        self.console_log_level = 1
+    
+    def execute(self, enabled, input_image, swap_model, facedetection, face_restore_model, face_restore_visibility, codeformer_weight, source_image=None, face_model=None, options=None):
+
+        if options is not None:
+            self.faces_order = [options["input_faces_order"], options["source_faces_order"]]
+            self.console_log_level = options["console_log_level"]
+            self.detect_gender_input = options["detect_gender_input"]
+            self.detect_gender_source = options["detect_gender_source"]
+            self.input_faces_index = options["input_faces_index"]
+            self.source_faces_index = options["source_faces_index"]
+        
+        result = reactor.execute(
+            self,enabled,input_image,swap_model,self.detect_gender_source,self.detect_gender_input,self.source_faces_index,self.input_faces_index,self.console_log_level,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,source_image,face_model,self.faces_order
+        )
+
+        return result
 
 
 class LoadFaceModel:
@@ -914,9 +963,16 @@ class ReActorOptions:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "faces_order": (
+                "input_faces_order": (
                     ["left-right","right-left","top-bottom","bottom-top","small-large","large-small"], {"default": "large-small"}
                 ),
+                "input_faces_index": ("STRING", {"default": "0"}),
+                "detect_gender_input": (["no","female","male"], {"default": "no"}),
+                "source_faces_order": (
+                    ["left-right","right-left","top-bottom","bottom-top","small-large","large-small"], {"default": "large-small"}
+                ),
+                "source_faces_index": ("STRING", {"default": "0"}),
+                "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
             }
         }
@@ -925,9 +981,14 @@ class ReActorOptions:
     FUNCTION = "execute"
     CATEGORY = "🌌 ReActor"
 
-    def execute(self,faces_order,console_log_level):
+    def execute(self,input_faces_order, input_faces_index, detect_gender_input, source_faces_order, source_faces_index, detect_gender_source, console_log_level):
         options: dict = {
-            "faces_order": faces_order,
+            "input_faces_order": input_faces_order,
+            "input_faces_index": input_faces_index,
+            "detect_gender_input": detect_gender_input,
+            "source_faces_order": source_faces_order,
+            "source_faces_index": source_faces_index,
+            "detect_gender_source": detect_gender_source,
             "console_log_level": console_log_level,
         }
         return (options, )
@@ -935,6 +996,7 @@ class ReActorOptions:
 
 NODE_CLASS_MAPPINGS = {
     "ReActorFaceSwap": reactor,
+    "ReActorFaceSwapOpt": ReActorPlusOpt,
     "ReActorLoadFaceModel": LoadFaceModel,
     "ReActorSaveFaceModel": SaveFaceModel,
     "ReActorRestoreFace": RestoreFace,
@@ -952,5 +1014,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorBuildFaceModel": "Build Blended Face Model",
     "ReActorMaskHelper": "ReActor Masking Helper",
     "ReActorImageDublicator": "ReActor Image Dublicator (List)",
-    "ReActorOptions": "ReActor Options"
+    "ReActorOptions": "ReActor Options",
+    "ReActorFaceSwapOpt": "ReActor - Fast Face Swap [OPTIONS]"
 }
