@@ -16,6 +16,7 @@ from insightface.app.common import Face
 from segment_anything import sam_model_registry
 
 from modules.processing import StableDiffusionProcessingImg2Img
+from modules.shared import state
 from comfy_extras.chainner_models import model_loading
 import comfy.model_management as model_management
 import comfy.utils
@@ -188,6 +189,10 @@ class reactor:
             out_images = np.ndarray(shape=image_np.shape)
 
             for i in range(total_images):
+
+                if state.interrupted or model_management.processing_interrupted():
+                    logger.status("Interrupted by User")
+                    break
 
                 if total_images > 1:
                     logger.status(f"Restoring {i+1}")
@@ -875,6 +880,27 @@ class MaskHelper:
         return out
 
 
+class ImageDublicator:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),               
+                "count": ("INT", {"default": 1, "min": 0}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("IMAGES",)
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self, image, count):
+        images = [image for i in range(count)]        
+        return (images,)
+
+
 NODE_CLASS_MAPPINGS = {
     "ReActorFaceSwap": reactor,
     "ReActorLoadFaceModel": LoadFaceModel,
@@ -882,6 +908,7 @@ NODE_CLASS_MAPPINGS = {
     "ReActorRestoreFace": RestoreFace,
     "ReActorBuildFaceModel": BuildFaceModel,
     "ReActorMaskHelper": MaskHelper,
+    "ReActorImageDublicator": ImageDublicator,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -890,5 +917,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorSaveFaceModel": "Save Face Model",
     "ReActorRestoreFace": "Restore Face",
     "ReActorBuildFaceModel": "Build Blended Face Model",
-    "ReActorMaskHelper": "ReActor Masking Helper"
+    "ReActorMaskHelper": "ReActor Masking Helper",
+    "ReActorImageDublicator": "ReActor Image Dublicator (List)",
 }
