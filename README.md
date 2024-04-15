@@ -55,7 +55,38 @@
 
 ## What's new in the latest update
 
-### 0.4.2 <sub><sup>BETA2</sup></sub>
+### 0.5.0 <sub><sup>ALPHA1</sup></sub>
+
+- ReActorBuildFaceModel Node got "face_model" output to provide a blended face model directly to the main Node:
+
+Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/workflows/ReActor--Build-Blended-Face-Model--v2.json)
+
+- Face Masking feature is available now, just add the "ReActorMaskHelper" Node to the workflow and connect it as shown below:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-01.jpg?raw=true" alt="0.5.0-whatsnew-01" width="100%"/>
+
+If you don't have the "face_yolov8m.pt" Ultralytics model - you can download it from the [Assets](https://huggingface.co/datasets/Gourieff/ReActor/blob/main/models/detection/bbox/face_yolov8m.pt) and put it into the "ComfyUI\models\ultralytics\bbox" directory
+<br>
+As well as ["sam_vit_b_01ec64.pth"](https://huggingface.co/datasets/Gourieff/ReActor/blob/main/models/sams/sam_vit_b_01ec64.pth) model - download (if you don't have it) and put it into the "ComfyUI\models\sams" directory;
+
+Use this Node to gain the best results of the face swapping process:
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-02.jpg?raw=true" alt="0.5.0-whatsnew-02" width="100%"/>
+
+- ReActorImageDublicator Node - rather usefull for those who create videos, it helps to duplicate one image to several frames to use them with VAE Encoder (e.g. live avatars):
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-03.jpg?raw=true" alt="0.5.0-whatsnew-03" width="100%"/>
+
+- ReActorFaceSwapOpt (a simplified version of the Main Node) + ReActorOptions Nodes to set some additional options such as (new) "input/source faces separate order". Yes! You can now set the order of faces in the index in the way you want ("large to small" goes by default)!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-04.jpg?raw=true" alt="0.5.0-whatsnew-04" width="100%"/>
+
+- Little speed boost when analyzing target images (unfortunately it is still quite slow in compare to swapping and restoring...)
+
+<details>
+	<summary><a>Previous versions</a></summary>
+
+### 0.4.2
 
 - GPEN-BFR-512 and RestoreFormer_Plus_Plus face restoration models support
 
@@ -63,8 +94,6 @@ You can download models here: https://huggingface.co/datasets/Gourieff/ReActor/t
 <br>Put them into the `ComfyUI\models\facerestore_models` folder
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.2-whatsnew-04.jpg?raw=true" alt="0.4.2-whatsnew-04" width="100%"/>
-
-### 0.4.2 <sub><sup>BETA1</sup></sub>
 
 - Due to popular demand - you can now blend several images with persons into one face model file and use it with "Load Face Model" Node or in SD WebUI as well;
 
@@ -80,18 +109,14 @@ Result example (the new face was created from 4 faces of different actresses):
 
 Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/workflows/ReActor--Build-Blended-Face-Model--v1.json)
 
-### 0.4.1 <sub><sup>BETA9</sup></sub>
+### 0.4.1
 
 - CUDA 12 Support - don't forget to run (Windows) `install.bat` or (Linux/MacOS) `install.py` for ComfyUI's Python enclosure or try to install ORT-GPU for CU12 manually (https://onnxruntime.ai/docs/install/#install-onnx-runtime-gpu-cuda-12x)
 - Issue https://github.com/Gourieff/comfyui-reactor-node/issues/173 fix
 
-### 0.4.1 <sub><sup>BETA8</sup></sub>
-
 - Separate Node for the Face Restoration postprocessing (FR https://github.com/Gourieff/comfyui-reactor-node/issues/191), can be found inside ReActor's menu (RestoreFace Node)
 - (Windows) Installation can be done for Python from the System's PATH
 - Different fixes and improvements
-
-### 0.4.1 <sub><sup>BETA1</sup></sub>
 
 - Face Restore Visibility and CodeFormer Weight (Fidelity) options are now available! Don't forget to reload the Node in your existing workflow
 
@@ -113,6 +138,8 @@ Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-react
 - Different fixes making this extension better.
 
 Thanks to everyone who finds bugs, suggests new features and supports this project!
+
+</details>
 
 ## Installation
 
