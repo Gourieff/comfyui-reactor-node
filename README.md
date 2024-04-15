@@ -73,7 +73,7 @@ Use this Node to gain the best results of the face swapping process:
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-02.jpg?raw=true" alt="0.5.0-whatsnew-02" width="100%"/>
 
-- ReActorImageDublicator Node - rather usefull for those who create videos, it helps to duplicate one image to several frames to use them with VAE Encoder (e.g. live avatars):
+- ReActorImageDublicator Node - rather useful for those who create videos, it helps to duplicate one image to several frames to use them with VAE Encoder (e.g. live avatars):
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-03.jpg?raw=true" alt="0.5.0-whatsnew-03" width="100%"/>
 
