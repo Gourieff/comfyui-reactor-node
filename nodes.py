@@ -70,6 +70,13 @@ folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_mo
 
 BLENDED_FACE_MODEL = None
 
+if "ultralytics" not in folder_paths.folder_names_and_paths:
+    add_folder_path_and_extensions("ultralytics_bbox", [os.path.join(models_dir, "ultralytics", "bbox")], folder_paths.supported_pt_extensions)
+    add_folder_path_and_extensions("ultralytics_segm", [os.path.join(models_dir, "ultralytics", "segm")], folder_paths.supported_pt_extensions)
+    add_folder_path_and_extensions("ultralytics", [os.path.join(models_dir, "ultralytics")], folder_paths.supported_pt_extensions)
+if "sams" not in folder_paths.folder_names_and_paths:
+    add_folder_path_and_extensions("sams", [os.path.join(models_dir, "sams")], folder_paths.supported_pt_extensions)
+
 def get_facemodels():
     models_path = os.path.join(FACE_MODELS_PATH, "*")
     models = glob.glob(models_path)
@@ -601,10 +608,6 @@ class MaskHelper:
         # self.force_resize_width = 0
         # self.force_resize_height = 0
         # self.resize_behavior = "source_size"
-        add_folder_path_and_extensions("ultralytics_bbox", [os.path.join(models_dir, "ultralytics", "bbox")], folder_paths.supported_pt_extensions)
-        add_folder_path_and_extensions("ultralytics_segm", [os.path.join(models_dir, "ultralytics", "segm")], folder_paths.supported_pt_extensions)
-        add_folder_path_and_extensions("ultralytics", [os.path.join(models_dir, "ultralytics")], folder_paths.supported_pt_extensions)
-        add_folder_path_and_extensions("sams", [os.path.join(models_dir, "sams")], folder_paths.supported_pt_extensions)
     
     @classmethod
     def INPUT_TYPES(s):
