@@ -43,7 +43,8 @@ from reactor_utils import (
     download,
     set_ort_session,
     prepare_cropped_face,
-    normalize_cropped_face
+    normalize_cropped_face,
+    add_folder_path_and_extensions
 )
 from reactor_log_patch import apply_logging_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
@@ -600,6 +601,10 @@ class MaskHelper:
         # self.force_resize_width = 0
         # self.force_resize_height = 0
         # self.resize_behavior = "source_size"
+        add_folder_path_and_extensions("ultralytics_bbox", [os.path.join(models_dir, "ultralytics", "bbox")], folder_paths.supported_pt_extensions)
+        add_folder_path_and_extensions("ultralytics_segm", [os.path.join(models_dir, "ultralytics", "segm")], folder_paths.supported_pt_extensions)
+        add_folder_path_and_extensions("ultralytics", [os.path.join(models_dir, "ultralytics")], folder_paths.supported_pt_extensions)
+        add_folder_path_and_extensions("sams", [os.path.join(models_dir, "sams")], folder_paths.supported_pt_extensions)
     
     @classmethod
     def INPUT_TYPES(s):
