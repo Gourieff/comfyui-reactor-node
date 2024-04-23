@@ -218,7 +218,7 @@ Since version 0.3.0 ReActor Node has a buil-in face restoration.<br>Just downloa
 
 ### Face Indexes
 
-ReActor detects faces in images in the following order:<br>left->right, top->bottom
+By default ReActor detects faces in images from "large" to "small".<br>You can change this option by adding ReActorFaceSwapOpt node with ReActorOptions.
 
 And if you need to specify faces, you can set indexes for source and input images.
 
