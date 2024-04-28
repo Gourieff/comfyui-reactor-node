@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.5.0_alpha1-lightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.5.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -54,6 +54,11 @@
 <a name="latestupdate">
 
 ## What's new in the latest update
+
+### 0.5.0 <sub><sup>BETA1</sup></sub>
+
+- SWAPPED_FACE output for the Masking Helper Node
+- FIX: Empty A-channel for Masking Helper IMAGE output (causing errors with some nodes) was removed
 
 ### 0.5.0 <sub><sup>ALPHA1</sup></sub>
 
