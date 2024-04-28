@@ -44,7 +44,8 @@ from reactor_utils import (
     set_ort_session,
     prepare_cropped_face,
     normalize_cropped_face,
-    add_folder_path_and_extensions
+    add_folder_path_and_extensions,
+    rgba2rgb_tensor
 )
 from reactor_log_patch import apply_logging_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
@@ -966,6 +967,24 @@ class ImageDublicator:
         return (images,)
 
 
+class ImageRGBA2RGB:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self, image):
+        out = rgba2rgb_tensor(image)       
+        return (out,)
+
+
 class ReActorOptions:
     @classmethod
     def INPUT_TYPES(s):
@@ -1012,6 +1031,7 @@ NODE_CLASS_MAPPINGS = {
     "ReActorMaskHelper": MaskHelper,
     "ReActorImageDublicator": ImageDublicator,
     "ReActorOptions": ReActorOptions,
+    "ImageRGBA2RGB": ImageRGBA2RGB,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1023,5 +1043,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorMaskHelper": "ReActor Masking Helper",
     "ReActorImageDublicator": "ReActor Image Dublicator (List)",
     "ReActorOptions": "ReActor Options",
-    "ReActorFaceSwapOpt": "ReActor - Fast Face Swap [OPTIONS]"
+    "ReActorFaceSwapOpt": "ReActor - Fast Face Swap [OPTIONS]",
+    "ImageRGBA2RGB": "Convert RGBA to RGB",
 }

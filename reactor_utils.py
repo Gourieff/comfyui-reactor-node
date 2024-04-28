@@ -102,6 +102,13 @@ def tensor2img(tensor, rgb2bgr=True, out_type=np.uint8, min_max=(0, 1)):
     return result
 
 
+def rgba2rgb_tensor(rgba):
+    r = rgba[...,0]
+    g = rgba[...,1]
+    b = rgba[...,2]
+    return torch.stack([r, g, b], dim=3)
+
+
 def download(url, path, name):
     request = urllib.request.urlopen(url)
     total = int(request.headers.get('Content-Length', 0))
