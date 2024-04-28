@@ -640,8 +640,8 @@ class MaskHelper:
             }
         }
     
-    RETURN_TYPES = ("IMAGE","MASK","IMAGE")
-    RETURN_NAMES = ("IMAGE","MASK","MASK_PREVIEW")
+    RETURN_TYPES = ("IMAGE","MASK","IMAGE","IMAGE")
+    RETURN_NAMES = ("IMAGE","MASK","MASK_PREVIEW","SWAPPED_FACE")
     FUNCTION = "execute"
     CATEGORY = "🌌 ReActor"
 
@@ -905,8 +905,14 @@ class MaskHelper:
                 #     paste_mask = torch.min(pasting_alpha, mask[i]).unsqueeze(2).repeat(1, 1, 4)
                 paste_mask = torch.min(pasting_alpha, mask[i]).unsqueeze(2).repeat(1, 1, 4)
                 result[image_index] = pasting * paste_mask + result[image_index] * (1. - paste_mask)
+
+                face_segment = result
+
+                face_segment[...,3] = mask[i]
+
+                result = rgba2rgb_tensor(result)
         
-        return (result,combined_mask,mask_image_final,)
+        return (result,combined_mask,mask_image_final,face_segment,)
 
     def gaussian_blur(self, image, kernel_size, sigma):
         kernel = torch.Tensor(kernel_size, kernel_size).to(device=image.device)
