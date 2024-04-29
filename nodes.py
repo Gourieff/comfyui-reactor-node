@@ -416,11 +416,14 @@ class BuildFaceModel:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "images": ("IMAGE",),
                 "save_mode": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
                 "send_only": ("BOOLEAN", {"default": False, "label_off": "NO", "label_on": "YES"}),
                 "face_model_name": ("STRING", {"default": "default"}),
                 "compute_method": (["Mean", "Median", "Mode"], {"default": "Mean"}),
+            },
+            "optional": {
+                "images": ("IMAGE",),
+                "face_models": ("FACE_MODEL",),
             }
         }
 
@@ -454,34 +457,53 @@ class BuildFaceModel:
             # logger.error(no_face_msg)
             return no_face_msg
     
-    def blend_faces(self, images, save_mode, send_only, face_model_name, compute_method):
+    def blend_faces(self, save_mode, send_only, face_model_name, compute_method, images=None, face_models=None):
         global BLENDED_FACE_MODEL
         blended_face: Face = BLENDED_FACE_MODEL
 
         if send_only and blended_face is None:
             send_only = False
 
-        if images is not None and not send_only:
+        if (images is not None or face_models is not None) and not send_only:
 
             faces = []
             embeddings = []
-            images_list: List[Image.Image] = batch_tensor_to_pil(images)
 
             apply_logging_patch(1)
 
-            n = len(images_list)
+            if images is not None:
+                images_list: List[Image.Image] = batch_tensor_to_pil(images)
 
-            for i,image in enumerate(images_list):
-                logging.StreamHandler.terminator = " "
-                logger.status(f"Building Face Model {i+1} of {n}...")
-                face = self.build_face_model(image)
-                if isinstance(face, str):
-                    logger.error(f"No faces found in image {i+1}, skipping")
-                    continue
-                else:
-                    print(f"{int(((i+1)/n)*100)}%")
-                faces.append(face)
-                embeddings.append(face.embedding)
+                n = len(images_list)
+
+                for i,image in enumerate(images_list):
+                    logging.StreamHandler.terminator = " "
+                    logger.status(f"Building Face Model {i+1} of {n}...")
+                    face = self.build_face_model(image)
+                    if isinstance(face, str):
+                        logger.error(f"No faces found in image {i+1}, skipping")
+                        continue
+                    else:
+                        print(f"{int(((i+1)/n)*100)}%")
+                    faces.append(face)
+                    embeddings.append(face.embedding)
+            
+            elif face_models is not None:
+
+                n = len(face_models)
+
+                for i,face_model in enumerate(face_models):
+                    logging.StreamHandler.terminator = " "
+                    logger.status(f"Extracting Face Model {i+1} of {n}...")
+                    face = face_model
+                    if isinstance(face, str):
+                        logger.error(f"No faces found for face_model {i+1}, skipping")
+                        continue
+                    else:
+                        print(f"{int(((i+1)/n)*100)}%")
+                    faces.append(face)
+                    embeddings.append(face.embedding)
+
             logging.StreamHandler.terminator = "\n"
             if len(faces) > 0:
                 # compute_method_name = "Mean" if compute_method == 0 else "Median" if compute_method == 1 else "Mode"
@@ -512,8 +534,8 @@ class BuildFaceModel:
                     logger.error(no_face_msg)
                     # return (blended_face,)
             # logger.status("--Done!--")
-        if images is None:
-            logger.error("Please provide `images`")
+        if images is None and face_models is None:
+            logger.error("Please provide `images` or `face_models`")
         return (blended_face,)
 
 
@@ -991,6 +1013,41 @@ class ImageRGBA2RGB:
         return (out,)
 
 
+class MakeFaceModelBatch:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "face_model1": ("FACE_MODEL",), 
+            },
+            "optional": {
+                "face_model2": ("FACE_MODEL",),
+                "face_model3": ("FACE_MODEL",),
+                "face_model4": ("FACE_MODEL",),
+                "face_model5": ("FACE_MODEL",),
+                "face_model6": ("FACE_MODEL",),
+                "face_model7": ("FACE_MODEL",),
+                "face_model8": ("FACE_MODEL",),
+                "face_model9": ("FACE_MODEL",),
+                "face_model10": ("FACE_MODEL",),
+            },
+        }
+
+    RETURN_TYPES = ("FACE_MODEL",)
+    RETURN_NAMES = ("FACE_MODELS",)
+    FUNCTION = "execute"
+
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self, **kwargs):
+        if len(kwargs) > 0:
+            face_models = [value for value in kwargs.values()]
+            return (face_models,)
+        else:
+            logger.error("Please provide at least 1 `face_model`")
+            return (None,)
+
+
 class ReActorOptions:
     @classmethod
     def INPUT_TYPES(s):
@@ -1028,27 +1085,35 @@ class ReActorOptions:
 
 
 NODE_CLASS_MAPPINGS = {
+    # --- MAIN NODES ---
     "ReActorFaceSwap": reactor,
     "ReActorFaceSwapOpt": ReActorPlusOpt,
-    "ReActorLoadFaceModel": LoadFaceModel,
-    "ReActorSaveFaceModel": SaveFaceModel,
-    "ReActorRestoreFace": RestoreFace,
-    "ReActorBuildFaceModel": BuildFaceModel,
-    "ReActorMaskHelper": MaskHelper,
-    "ReActorImageDublicator": ImageDublicator,
     "ReActorOptions": ReActorOptions,
+    "ReActorMaskHelper": MaskHelper,
+    # --- Operations with Face Models ---
+    "ReActorSaveFaceModel": SaveFaceModel,
+    "ReActorLoadFaceModel": LoadFaceModel,
+    "ReActorBuildFaceModel": BuildFaceModel,
+    "ReActorMakeFaceModelBatch": MakeFaceModelBatch,
+    # --- Additional Nodes ---
+    "ReActorRestoreFace": RestoreFace,
+    "ReActorImageDublicator": ImageDublicator,
     "ImageRGBA2RGB": ImageRGBA2RGB,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "ReActorFaceSwap": "ReActor - Fast Face Swap",
-    "ReActorLoadFaceModel": "Load Face Model",
-    "ReActorSaveFaceModel": "Save Face Model",
-    "ReActorRestoreFace": "Restore Face",
-    "ReActorBuildFaceModel": "Build Blended Face Model",
-    "ReActorMaskHelper": "ReActor Masking Helper",
-    "ReActorImageDublicator": "ReActor Image Dublicator (List)",
-    "ReActorOptions": "ReActor Options",
-    "ReActorFaceSwapOpt": "ReActor - Fast Face Swap [OPTIONS]",
-    "ImageRGBA2RGB": "Convert RGBA to RGB",
+    # --- MAIN NODES ---
+    "ReActorFaceSwap": "ReActor 🌌 Fast Face Swap",
+    "ReActorFaceSwapOpt": "ReActor 🌌 Fast Face Swap [OPTIONS]",
+    "ReActorOptions": "ReActor 🌌 Options",
+    "ReActorMaskHelper": "ReActor 🌌 Masking Helper",
+    # --- Operations with Face Models ---
+    "ReActorSaveFaceModel": "Save Face Model 🌌 ReActor",
+    "ReActorLoadFaceModel": "Load Face Model 🌌 ReActor",
+    "ReActorBuildFaceModel": "Build Blended Face Model 🌌 ReActor",
+    "ReActorMakeFaceModelBatch": "Make Face Model Batch 🌌 ReActor",
+    # --- Additional Nodes ---
+    "ReActorRestoreFace": "Restore Face 🌌 ReActor",
+    "ReActorImageDublicator": "Image Dublicator (List) 🌌 ReActor",
+    "ImageRGBA2RGB": "Convert RGBA to RGB 🌌 ReActor",
 }
