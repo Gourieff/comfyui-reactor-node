@@ -455,8 +455,8 @@ def swap_face_many(
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
             elif source_face is not None:
-                results = []
-                # results = target_imgs
+                # results = []
+                results = target_imgs
                 model_path = model_path = os.path.join(insightface_path, model)
                 face_swapper = getFaceSwapModel(model_path)
 
@@ -473,12 +473,13 @@ def swap_face_many(
                     source_face_idx += 1
 
                     if source_face is not None and src_wrong_gender == 0:
-                        for i, (target_img, target_face) in enumerate(zip(target_imgs, target_faces)):
+                        # Reading results to make current face swap on a previous face result
+                        for i, (target_img, target_face) in enumerate(zip(results, target_faces)):
                             target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target, order=faces_order[0])
                             if target_face_single is not None and wrong_gender == 0:
                                 logger.status(f"Swapping {i}...")
                                 result = face_swapper.get(target_img, target_face_single, source_face)
-                                results.append(result)
+                                results[i] = result
                             elif wrong_gender == 1:
                                 wrong_gender = 0
                                 logger.status("Wrong target gender detected")
