@@ -123,7 +123,7 @@ original_functions = [ModelRouter.get_model, FaceAnalysis.__init__, FaceAnalysis
 patched_functions = [patched_get_model, patched_faceanalysis_init, patched_faceanalysis_prepare, patched_inswapper_init, pathced_retinaface_prepare]
 
 
-def apply_logging_patch(console_log_level):
+def apply_patch(console_log_level):
     if console_log_level == 0:
         patch_insightface(*patched_functions)
         logger.setLevel(logging.WARNING)
