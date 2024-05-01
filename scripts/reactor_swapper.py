@@ -54,7 +54,10 @@ if os.path.exists(insightface_path) and os.path.exists(insightface_path_old):
 FS_MODEL = None
 CURRENT_FS_MODEL_PATH = None
 
-ANALYSIS_MODEL = None
+ANALYSIS_MODELS = {
+    "640": None,
+    "320": None,
+}
 
 SOURCE_FACES = None
 SOURCE_IMAGE_HASH = None
@@ -67,14 +70,16 @@ def get_current_faces_model():
     global SOURCE_FACES
     return SOURCE_FACES
 
-def getAnalysisModel():
-    global ANALYSIS_MODEL
+def getAnalysisModel(det_size = (640, 640)):
+    global ANALYSIS_MODELS
+    ANALYSIS_MODEL = ANALYSIS_MODELS[str(det_size[0])]
     if ANALYSIS_MODEL is None:
         ANALYSIS_MODEL = insightface.app.FaceAnalysis(
             name="buffalo_l", providers=providers, root=insightface_path
         )
+    ANALYSIS_MODEL.prepare(ctx_id=0, det_size=det_size)
+    ANALYSIS_MODELS[str(det_size[0])] = ANALYSIS_MODEL
     return ANALYSIS_MODEL
-
 
 def getFaceSwapModel(model_path: str):
     global FS_MODEL
@@ -139,8 +144,7 @@ def half_det_size(det_size):
     return (det_size[0] // 2, det_size[1] // 2)
 
 def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
-    face_analyser = copy.deepcopy(getAnalysisModel())
-    face_analyser.prepare(ctx_id=0, det_size=det_size)
+    face_analyser = getAnalysisModel(det_size)
     return face_analyser.get(img_data)
 
 def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small"):
