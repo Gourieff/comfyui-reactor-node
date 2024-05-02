@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.5.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.5.0_beta2-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -55,11 +55,17 @@
 
 ## What's new in the latest update
 
-### 0.5.0 <sub><sup>BETA1,BETA2</sup></sub>
+### 0.5.0 <sub><sup>BETA2</sup></sub>
+
+- You can now build a blended face model from a batch of face models you already have, just add the "Make Face Model Batch" node to your workflow and connect several models via "Load Face Model"
+- Huge performance boost of the image analyzer's module! 10x speed up! Working with videos is now a pleasure!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-05.png?raw=true" alt="0.5.0-whatsnew-05" width="100%"/>
+
+### 0.5.0 <sub><sup>BETA1</sup></sub>
 
 - SWAPPED_FACE output for the Masking Helper Node
 - FIX: Empty A-channel for Masking Helper IMAGE output (causing errors with some nodes) was removed
-- You can now build a blended face model from a batch of face models you already have, just add the "Make Face Model Batch" node to your workflow and connect several models via "Load Face Model"
 
 ### 0.5.0 <sub><sup>ALPHA1</sup></sub>
 
