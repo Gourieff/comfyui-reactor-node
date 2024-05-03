@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.5.0_beta1-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.5.0_beta2-green?style=for-the-badge&labelColor=darkgreen)
 
   <sup>
   <font color=brightred>
@@ -54,6 +54,13 @@
 <a name="latestupdate">
 
 ## What's new in the latest update
+
+### 0.5.0 <sub><sup>BETA2</sup></sub>
+
+- You can now build a blended face model from a batch of face models you already have, just add the "Make Face Model Batch" node to your workflow and connect several models via "Load Face Model"
+- Huge performance boost of the image analyzer's module! 10x speed up! Working with videos is now a pleasure!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-05.png?raw=true" alt="0.5.0-whatsnew-05" width="100%"/>
 
 ### 0.5.0 <sub><sup>BETA1</sup></sub>
 
@@ -168,7 +175,7 @@ https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_mo
 11. Run SD WebUI and check console for the message that ReActor Node is running:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/console_status_running.jpg?raw=true" alt="console_status_running" width="759"/>
 
-1.  Go to the ComfyUI tab and find there ReActor Node inside the menu `ReActor` or by using a search:
+12.  Go to the ComfyUI tab and find there ReActor Node inside the menu `ReActor` or by using a search:
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/webui-demo.png?raw=true" alt="webui-demo" width="100%"/>
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/uploads/search-demo.png?raw=true" alt="webui-demo" width="1043"/>
 
@@ -181,12 +188,14 @@ https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_mo
    - Install [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) (Community version - you need this step to build Insightface)
    - OR only [VS C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select "Desktop Development with C++" under "Workloads -> Desktop & Mobile"
    - OR if you don't want to install VS or VS C++ BT - follow [this steps (sec. I)](#insightfacebuild)
-2. Go to the `ComfyUI\custom_nodes` directory
-3. Open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
-4. Run `install.bat`
-5. (From the version 0.3.0) Download additional facerestorers models from the link below and put them into the `ComfyUI\models\facerestore_models` directory:<br>
-https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models
-6. Run ComfyUI and find there ReActor Node inside the menu `ReActor` or by using a search
+2. Choose between two options:
+   - (ComfyUI Manager) Open ComfyUI Manager, click "Install Custom Nodes", type "ReActor" in the "Search" field and then click "Install". After ComfyUI will complete the process - please restart the Server.
+   - (Manually) Go to `ComfyUI\custom_nodes`, open Console and run `git clone https://github.com/Gourieff/comfyui-reactor-node`
+3. Go to `ComfyUI\custom_nodes\comfyui-reactor-node` and run `install.bat`
+4. If you don't have the "face_yolov8m.pt" Ultralytics model - you can download it from the [Assets](https://huggingface.co/datasets/Gourieff/ReActor/blob/main/models/detection/bbox/face_yolov8m.pt) and put it into the "ComfyUI\models\ultralytics\bbox" directory
+<br>
+As well as one or both of "Sams" models from [here](https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/sams) - download (if you don't have them) and put into the "ComfyUI\models\sams" directory
+5. Run ComfyUI and find there ReActor Nodes inside the menu `ReActor` or by using a search
 
 </details>
 
@@ -195,9 +204,20 @@ https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_mo
 You can find ReActor Nodes inside the menu `ReActor` or by using a search (just type "ReActor" in the search field)
 
 List of Nodes:
-- ReActorFaceSwap (Main Node)
-- ReActorLoadFaceModel (Load Face Model)
-- ReActorSaveFaceModel (Save Face Model)
+- ••• Main Nodes •••
+   - ReActorFaceSwap (Main Node)
+   - ReActorFaceSwapOpt (Main Node with the additional Options input)
+   - ReActorOptions (Options for ReActorFaceSwapOpt)
+   - ReActorMaskHelper (Masking Helper)
+- ••• Operations with Face Models •••
+  - ReActorSaveFaceModel (Save Face Model)
+  - ReActorLoadFaceModel (Load Face Model)
+  - ReActorBuildFaceModel (Build Blended Face Model)
+  - ReActorMakeFaceModelBatch (Make Face Model Batch)
+- ••• Additional Nodes •••
+  - ReActorRestoreFace (Face Restoration)
+  - ReActorImageDublicator (Dublicate one Image to Images List)
+  - ImageRGBA2RGB (Convert RGBA to RGB)
 
 Connect all required slots and run the query.
 
@@ -206,16 +226,16 @@ Connect all required slots and run the query.
 - `input_image` - is an image to be processed (target image, analog of "target image" in the SD WebUI extension);
   - Supported Nodes: "Load Image", "Load Video" or any other nodes providing images as an output;
 - `source_image` - is an image with a face or faces to swap in the `input_image` (source image, analog of "source image" in the SD WebUI extension);
-  - Supported Nodes: "Load Image";
+  - Supported Nodes: "Load Image" or any other nodes providing images as an output;
 - `face_model` - is the input for the "Load Face Model" Node or another ReActor node to provide a face model file (face embedding) you created earlier via the "Save Face Model" Node;
-  - Supported Nodes: "Load Face Model";
+  - Supported Nodes: "Load Face Model", "Build Blended Face Model";
 
 ### Main Node Outputs
 
 - `IMAGE` - is an output with the resulted image;
   - Supported Nodes: any nodes which have images as an input;
 - `FACE_MODEL` - is an output providing a source face's model being built during the swapping process;
-  - Supported Nodes: "Save Face Model", "ReActor";
+  - Supported Nodes: "Save Face Model", "ReActor", "Make Face Model Batch";
 
 ### Face Restoration
 

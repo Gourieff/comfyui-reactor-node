@@ -47,7 +47,7 @@ from reactor_utils import (
     add_folder_path_and_extensions,
     rgba2rgb_tensor
 )
-from reactor_log_patch import apply_logging_patch
+from reactor_patcher import apply_patch
 from r_facelib.utils.face_restoration_helper import FaceRestoreHelper
 from r_basicsr.utils.registry import ARCH_REGISTRY
 import scripts.r_archs.codeformer_arch
@@ -92,7 +92,8 @@ def get_restorers():
         fr_urls = [
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.3.pth",
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.4.pth",
-            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/codeformer-v0.1.0.pth"
+            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/codeformer-v0.1.0.pth",
+            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-512.onnx"
         ]
         for model_url in fr_urls:
             model_name = os.path.basename(model_url)
@@ -289,7 +290,7 @@ class reactor:
         if faces_order is None:
             faces_order = self.faces_order
 
-        apply_logging_patch(console_log_level)
+        apply_patch(console_log_level)
 
         if not enabled:
             return (input_image,face_model)
@@ -469,7 +470,7 @@ class BuildFaceModel:
             faces = []
             embeddings = []
 
-            apply_logging_patch(1)
+            apply_patch(1)
 
             if images is not None:
                 images_list: List[Image.Image] = batch_tensor_to_pil(images)
@@ -568,7 +569,7 @@ class SaveFaceModel:
         if save_mode and image is not None:
             source = tensor_to_pil(image)
             source = cv2.cvtColor(np.array(source), cv2.COLOR_RGB2BGR)
-            apply_logging_patch(1)
+            apply_patch(1)
             logger.status("Building Face Model...")
             face_model_raw = analyze_faces(source, det_size)
             if len(face_model_raw) == 0:

@@ -97,18 +97,33 @@ def patched_inswapper_init(self, model_file=None, session=None):
     self.input_size = tuple(input_shape[2:4][::-1])
 
 
-def patch_insightface(get_model, faceanalysis_init, faceanalysis_prepare, inswapper_init):
+def pathced_retinaface_prepare(self, ctx_id, **kwargs):
+    if ctx_id<0:
+        self.session.set_providers(['CPUExecutionProvider'])
+    nms_thresh = kwargs.get('nms_thresh', None)
+    if nms_thresh is not None:
+        self.nms_thresh = nms_thresh
+    det_thresh = kwargs.get('det_thresh', None)
+    if det_thresh is not None:
+        self.det_thresh = det_thresh
+    input_size = kwargs.get('input_size', None)
+    if input_size is not None and self.input_size is None:
+        self.input_size = input_size
+
+
+def patch_insightface(get_model, faceanalysis_init, faceanalysis_prepare, inswapper_init, retinaface_prepare):
     insightface.model_zoo.model_zoo.ModelRouter.get_model = get_model
     insightface.app.FaceAnalysis.__init__ = faceanalysis_init
     insightface.app.FaceAnalysis.prepare = faceanalysis_prepare
     insightface.model_zoo.inswapper.INSwapper.__init__ = inswapper_init
+    insightface.model_zoo.retinaface.RetinaFace.prepare = retinaface_prepare
 
 
-original_functions = [ModelRouter.get_model, FaceAnalysis.__init__, FaceAnalysis.prepare, INSwapper.__init__]
-patched_functions = [patched_get_model, patched_faceanalysis_init, patched_faceanalysis_prepare, patched_inswapper_init]
+original_functions = [ModelRouter.get_model, FaceAnalysis.__init__, FaceAnalysis.prepare, INSwapper.__init__, RetinaFace.prepare]
+patched_functions = [patched_get_model, patched_faceanalysis_init, patched_faceanalysis_prepare, patched_inswapper_init, pathced_retinaface_prepare]
 
 
-def apply_logging_patch(console_log_level):
+def apply_patch(console_log_level):
     if console_log_level == 0:
         patch_insightface(*patched_functions)
         logger.setLevel(logging.WARNING)
