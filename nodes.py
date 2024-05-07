@@ -856,6 +856,8 @@ class MaskHelper:
         target_height = max_y - min_y + 1
 
         result = image_base.detach().clone()
+        face_segment = mask_image_final
+        
         for i in range(0, MB):
             if is_empty[i]:
                 continue
