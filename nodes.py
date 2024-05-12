@@ -195,16 +195,34 @@ class reactor:
             if self.face_helper is None:
                 self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
 
-            image_np = 255. * result.cpu().numpy()
+            # print(f"result = {result.dtype}")
+            # image_np = 255. * result.cpu().numpy()
+            image_np = 255. * result.numpy()
 
             total_images = image_np.shape[0]
-            out_images = np.ndarray(shape=image_np.shape)
+
+            out_images = []
+
+            # try:
+            #     out_images = np.ndarray(shape=image_np.shape)
+            # except:
+            #     logger.error("Not enough RAM - Reducing data type to float32")
+            #     logger.info("Data type is set to 'float32'")
+            #     try:
+            #         logger.status("Trying again...")
+            #         out_images = np.ndarray(shape=image_np.shape, dtype=np.float32)
+            #     except:
+            #         logger.error("Not enough RAM - Reducing data type to float16")
+            #         logger.info("Data type is set to 'float16'")
+            #         try:
+            #             logger.status("Trying again...")
+            #             out_images = np.ndarray(shape=image_np.shape, dtype=np.float16)
+            #         except Exception as e:
+            #             logger.error("Not enough RAM, canceling...")
+            #             logger.status(f"Interrupted with Exception: {e}")
+            #             return result
 
             for i in range(total_images):
-
-                if state.interrupted or model_management.processing_interrupted():
-                    logger.status("Interrupted by User")
-                    break
 
                 if total_images > 1:
                     logger.status(f"Restoring {i+1}")
@@ -276,7 +294,12 @@ class reactor:
 
                 self.face_helper.clean_all()
 
-                out_images[i] = restored_img
+                # out_images[i] = restored_img
+                out_images.append(restored_img)
+
+                if state.interrupted or model_management.processing_interrupted():
+                    logger.status("Interrupted by User")
+                    return input_image
 
             restored_img_np = np.array(out_images).astype(np.float32) / 255.0
             restored_img_tensor = torch.from_numpy(restored_img_np)
