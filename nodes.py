@@ -121,7 +121,7 @@ class reactor:
         return {
             "required": {
                 "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
-                "input_image": ("IMAGE",),               
+                "input_image": ("IMAGE",),
                 "swap_model": (list(model_names().keys()),),
                 "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
                 "face_restore_model": (get_model_names(get_restorers),),
@@ -166,7 +166,7 @@ class reactor:
             model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
 
             device = model_management.get_torch_device()
-            
+
             if "codeformer" in face_restore_model.lower():
                 
                 codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
@@ -277,10 +277,10 @@ class reactor:
 
                         print(f"\tFailed inference: {error}", file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
-                    
+
                     if face_restore_visibility < 1:
                         restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
-                    
+
                     restored_face = restored_face.astype("uint8")
                     self.face_helper.add_restored_face(restored_face)
 
@@ -307,7 +307,7 @@ class reactor:
             result = restored_img_tensor
 
         return result
-    
+
     def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None):
 
         if faces_order is None:

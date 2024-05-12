@@ -459,7 +459,6 @@ def swap_face_many(
             if len(source_faces_index) != 0 and len(source_faces_index) != 1 and len(source_faces_index) != len(faces_index):
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
             elif source_face is not None:
-                # results = []
                 results = target_imgs
                 model_path = model_path = os.path.join(insightface_path, model)
                 face_swapper = getFaceSwapModel(model_path)
