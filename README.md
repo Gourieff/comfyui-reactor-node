@@ -98,7 +98,7 @@ Use this Node to gain the best results of the face swapping process:
 <details>
 	<summary><a>Previous versions</a></summary>
 
-### 0.4.2
+### [0.4.2](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.4.2)
 
 - GPEN-BFR-512 and RestoreFormer_Plus_Plus face restoration models support
 
@@ -121,7 +121,7 @@ Result example (the new face was created from 4 faces of different actresses):
 
 Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/workflows/ReActor--Build-Blended-Face-Model--v1.json)
 
-### 0.4.1
+### [0.4.1](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.4.1)
 
 - CUDA 12 Support - don't forget to run (Windows) `install.bat` or (Linux/MacOS) `install.py` for ComfyUI's Python enclosure or try to install ORT-GPU for CU12 manually (https://onnxruntime.ai/docs/install/#install-onnx-runtime-gpu-cuda-12x)
 - Issue https://github.com/Gourieff/comfyui-reactor-node/issues/173 fix
@@ -134,7 +134,7 @@ Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-react
 
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.4.1-whatsnew-01.jpg?raw=true" alt="0.4.1-whatsnew-01" width="100%"/>
 
-### 0.4.0
+### [0.4.0](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.4.0)
 
 - Input "input_image" goes first now, it gives a correct bypass and also it is right to have the main input first;
 - You can now save face models as "safetensors" files (`ComfyUI\models\reactor\faces`) and load them into ReActor implementing different scenarios and keeping super lightweight face models of the faces you use:
