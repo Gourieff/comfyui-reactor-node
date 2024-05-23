@@ -54,6 +54,10 @@ if os.path.exists(insightface_path) and os.path.exists(insightface_path_old):
 FS_MODEL = None
 CURRENT_FS_MODEL_PATH = None
 
+# slow method (old):
+ANALYSIS_MODEL_OLD_METHOD = None
+
+# fast method:
 ANALYSIS_MODELS = {
     "640": None,
     "320": None,
@@ -69,6 +73,14 @@ TARGET_IMAGE_LIST_HASH = []
 def get_current_faces_model():
     global SOURCE_FACES
     return SOURCE_FACES
+
+def getAnalysisModel_oldmethod():
+    global ANALYSIS_MODEL_OLD_METHOD
+    if ANALYSIS_MODEL_OLD_METHOD is None:
+        ANALYSIS_MODEL_OLD_METHOD = insightface.app.FaceAnalysis(
+            name="buffalo_l", providers=providers, root=insightface_path
+        )
+    return ANALYSIS_MODEL_OLD_METHOD
 
 def getAnalysisModel(det_size = (640, 640)):
     global ANALYSIS_MODELS
@@ -143,11 +155,15 @@ def half_det_size(det_size):
     logger.status("Trying to halve 'det_size' parameter")
     return (det_size[0] // 2, det_size[1] // 2)
 
-def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
-    face_analyser = getAnalysisModel(det_size)
+def analyze_faces(img_data: np.ndarray, method="fast", det_size=(640, 640)):
+    if method == "fast":
+        face_analyser = getAnalysisModel(det_size)
+    else:
+        face_analyser = copy.deepcopy(getAnalysisModel_oldmethod())
+        face_analyser.prepare(ctx_id=0, det_size=det_size)
     return face_analyser.get(img_data)
 
-def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small"):
+def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small", method="fast"):
 
     buffalo_path = os.path.join(insightface_models_path, "buffalo_l.zip")
     if os.path.exists(buffalo_path):
@@ -156,18 +172,18 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
     if gender_source != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
             det_size_half = half_det_size(det_size)
-            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
+            return get_face_single(img_data, analyze_faces(img_data, method, det_size_half), face_index, det_size_half, gender_source, gender_target, order, method)
         return get_face_gender(face,face_index,gender_source,"Source", order)
 
     if gender_target != 0:
         if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
             det_size_half = half_det_size(det_size)
-            return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
+            return get_face_single(img_data, analyze_faces(img_data, method, det_size_half), face_index, det_size_half, gender_source, gender_target, order, method)
         return get_face_gender(face,face_index,gender_target,"Target", order)
     
     if len(face) == 0 and det_size[0] > 320 and det_size[1] > 320:
         det_size_half = half_det_size(det_size)
-        return get_face_single(img_data, analyze_faces(img_data, det_size_half), face_index, det_size_half, gender_source, gender_target, order)
+        return get_face_single(img_data, analyze_faces(img_data, method, det_size_half), face_index, det_size_half, gender_source, gender_target, order, method)
 
     try:
         faces_sorted = sort_by_order(face, order)
@@ -187,6 +203,7 @@ def swap_face(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
+    analyzer_load: str = "fast",
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
     result_image = target_img
@@ -227,7 +244,7 @@ def swap_face(
 
             if SOURCE_FACES is None or not source_image_same:
                 logger.status("Analyzing Source Image...")
-                source_faces = analyze_faces(source_img)
+                source_faces = analyze_faces(source_img, method=analyzer_load)
                 SOURCE_FACES = source_faces
             elif source_image_same:
                 logger.status("Using Hashed Source Face(s) Model...")
@@ -260,7 +277,7 @@ def swap_face(
             
             if TARGET_FACES is None or not target_image_same:
                 logger.status("Analyzing Target Image...")
-                target_faces = analyze_faces(target_img)
+                target_faces = analyze_faces(target_img, method=analyzer_load)
                 TARGET_FACES = target_faces
             elif target_image_same:
                 logger.status("Using Hashed Target Face(s) Model...")
@@ -273,7 +290,7 @@ def swap_face(
 
             if source_img is not None:
                 # separated management of wrong_gender between source and target, enhancement
-                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order[1])
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order[1], method=analyzer_load)
             else:
                 # source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
                 source_face = sorted(source_faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)[source_faces_index[0]]
@@ -295,11 +312,11 @@ def swap_face(
                         break
 
                     if len(source_faces_index) > 1 and source_face_idx > 0:
-                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source, order=faces_order[1])
+                        source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[source_face_idx], gender_source=gender_source, order=faces_order[1], method=analyzer_load)
                     source_face_idx += 1
 
                     if source_face is not None and src_wrong_gender == 0:
-                        target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target, order=faces_order[0])
+                        target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target, order=faces_order[0], method=analyzer_load)
                         if target_face is not None and wrong_gender == 0:
                             logger.status(f"Swapping...")
                             result = face_swapper.get(result, target_face, source_face)
@@ -342,6 +359,7 @@ def swap_face_many(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
+    analyzer_load: str = "fast",
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
@@ -382,7 +400,7 @@ def swap_face_many(
 
             if SOURCE_FACES is None or not source_image_same:
                 logger.status("Analyzing Source Image...")
-                source_faces = analyze_faces(source_img)
+                source_faces = analyze_faces(source_img, method=analyzer_load)
                 SOURCE_FACES = source_faces
             elif source_image_same:
                 logger.status("Using Hashed Source Face(s) Model...")
@@ -423,15 +441,15 @@ def swap_face_many(
 
                 if len(TARGET_FACES_LIST) == 0:
                     logger.status(f"Analyzing Target Image {i}...")
-                    target_face = analyze_faces(target_img)
+                    target_face = analyze_faces(target_img, method=analyzer_load)
                     TARGET_FACES_LIST = [target_face]
                 elif len(TARGET_FACES_LIST) == i and not target_image_same:
                     logger.status(f"Analyzing Target Image {i}...")
-                    target_face = analyze_faces(target_img)
+                    target_face = analyze_faces(target_img, method=analyzer_load)
                     TARGET_FACES_LIST.append(target_face)
                 elif len(TARGET_FACES_LIST) != i and not target_image_same:
                     logger.status(f"Analyzing Target Image {i}...")
-                    target_face = analyze_faces(target_img)
+                    target_face = analyze_faces(target_img, method=analyzer_load)
                     TARGET_FACES_LIST[i] = target_face
                 elif target_image_same:
                     logger.status("(Image %s) Using Hashed Target Face(s) Model...", i)
@@ -439,7 +457,7 @@ def swap_face_many(
                 
 
                 # logger.status(f"Analyzing Target Image {i}...")
-                # target_face = analyze_faces(target_img)
+                # target_face = analyze_faces(target_img, method=analyzer_load)
                 if target_face is not None:
                     target_faces.append(target_face)
 
@@ -450,7 +468,7 @@ def swap_face_many(
 
             if source_img is not None:
                 # separated management of wrong_gender between source and target, enhancement
-                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order[1])
+                source_face, src_wrong_gender = get_face_single(source_img, source_faces, face_index=source_faces_index[0], gender_source=gender_source, order=faces_order[1], method=analyzer_load)
             else:
                 # source_face = sorted(source_faces, key=lambda x: x.bbox[0])[source_faces_index[0]]
                 source_face = sorted(source_faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse = True)[source_faces_index[0]]
@@ -478,7 +496,7 @@ def swap_face_many(
                     if source_face is not None and src_wrong_gender == 0:
                         # Reading results to make current face swap on a previous face result
                         for i, (target_img, target_face) in enumerate(zip(results, target_faces)):
-                            target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target, order=faces_order[0])
+                            target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target, order=faces_order[0], method=analyzer_load)
                             if target_face_single is not None and wrong_gender == 0:
                                 logger.status(f"Swapping {i}...")
                                 result = face_swapper.get(target_img, target_face_single, source_face)

@@ -308,7 +308,7 @@ class reactor:
 
         return result
 
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None):
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None, analyzer_load="fast", processing_method="analyzing -> swapping"):
 
         if faces_order is None:
             faces_order = self.faces_order
@@ -318,12 +318,14 @@ class reactor:
         if not enabled:
             return (input_image,face_model)
         elif source_image is None and face_model is None:
-            logger.error("Please provide 'source_image' or `face_model`")
+            logger.error("Please provide 'source_image' or 'face_model'")
             return (input_image,face_model)
 
         if face_model == "none":
             face_model = None
         
+        analyzer_options = [analyzer_load, processing_method]
+
         script = FaceSwapScript()
         pil_images = batch_tensor_to_pil(input_image)
         if source_image is not None:
@@ -344,6 +346,7 @@ class reactor:
             gender_target=detect_gender_input,
             face_model=face_model,
             faces_order=faces_order,
+            analyzer_options=analyzer_options,
         )
         result = batched_pil_to_tensor(p.init_images)
 
@@ -400,9 +403,11 @@ class ReActorPlusOpt:
             self.detect_gender_source = options["detect_gender_source"]
             self.input_faces_index = options["input_faces_index"]
             self.source_faces_index = options["source_faces_index"]
+            self.analyzer_load = options["analyzer_load"]
+            self.processing_method = options["processing_method"]
         
         result = reactor.execute(
-            self,enabled,input_image,swap_model,self.detect_gender_source,self.detect_gender_input,self.source_faces_index,self.input_faces_index,self.console_log_level,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,source_image,face_model,self.faces_order
+            self,enabled,input_image,swap_model,self.detect_gender_source,self.detect_gender_input,self.source_faces_index,self.input_faces_index,self.console_log_level,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,source_image,face_model,self.faces_order,self.analyzer_load,self.processing_method
         )
 
         return result
@@ -1090,6 +1095,8 @@ class ReActorOptions:
                 "source_faces_index": ("STRING", {"default": "0"}),
                 "detect_gender_source": (["no","female","male"], {"default": "no"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
+                "analyzer_load": (["fast","slow (old method)"], {"default": "fast"}),
+                "processing_method": (["analyzing -> swapping","analyzing + swapping"], {"default": "analyzing -> swapping"}),
             }
         }
 
@@ -1097,7 +1104,7 @@ class ReActorOptions:
     FUNCTION = "execute"
     CATEGORY = "🌌 ReActor"
 
-    def execute(self,input_faces_order, input_faces_index, detect_gender_input, source_faces_order, source_faces_index, detect_gender_source, console_log_level):
+    def execute(self,input_faces_order, input_faces_index, detect_gender_input, source_faces_order, source_faces_index, detect_gender_source, console_log_level, analyzer_load, processing_method):
         options: dict = {
             "input_faces_order": input_faces_order,
             "input_faces_index": input_faces_index,
@@ -1106,6 +1113,8 @@ class ReActorOptions:
             "source_faces_index": source_faces_index,
             "detect_gender_source": detect_gender_source,
             "console_log_level": console_log_level,
+            "analyzer_load": analyzer_load,
+            "processing_method": processing_method,
         }
         return (options, )
 
