@@ -3,6 +3,8 @@ import os
 import shutil
 from dataclasses import dataclass
 from typing import List, Union
+import torch
+from torchvision.transforms.functional import normalize
 
 import cv2
 import numpy as np
@@ -16,7 +18,14 @@ except:
     cuda = None
 
 from scripts.reactor_logger import logger
-from reactor_utils import move_path, get_image_md5hash
+from reactor_utils import (
+    move_path,
+    get_image_md5hash,
+    img2tensor,
+    set_ort_session,
+    prepare_cropped_face,
+    normalize_cropped_face
+)
 import folder_paths
 import comfy.model_management as model_management
 from modules.shared import state
@@ -65,6 +74,90 @@ TARGET_FACES = None
 TARGET_IMAGE_HASH = None
 TARGET_FACES_LIST = []
 TARGET_IMAGE_LIST_HASH = []
+
+def get_restored_face(cropped_face,
+                      face_restore_model,
+                      face_restore_visibility,
+                      codeformer_weight,):
+    logger.status(f"Restoring with {face_restore_model}")
+
+    faceSize = 512
+    if "1024" in face_restore_model.lower():
+        faceSize = 1024
+    elif "2048" in face_restore_model.lower():
+        faceSize = 2048
+
+    scale = faceSize / cropped_face.shape[0]
+    cropped_face = cv2.resize(cropped_face, (faceSize, faceSize),
+                              interpolation=cv2.INTER_CUBIC)
+
+    # For upscaling the base 128px face, I found bicubic interpolation to be the best compromise targeting antialiasing
+    # and detail preservation. Nearest is predictably unusable, Linear produces too much aliasing, and Lanczos produces
+    # too many hallucinations and artifacts/fringing.
+
+    model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
+    device = model_management.get_torch_device()
+
+    cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+    normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+    cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
+
+    try:
+
+        with torch.no_grad():
+
+            if ".onnx" in face_restore_model:  # ONNX models
+
+                ort_session = set_ort_session(model_path, providers=providers)
+                ort_session_inputs = {}
+                facerestore_model = ort_session
+
+                for ort_session_input in ort_session.get_inputs():
+                    if ort_session_input.name == "input":
+                        cropped_face_prep = prepare_cropped_face(cropped_face)
+                        ort_session_inputs[ort_session_input.name] = cropped_face_prep
+                    if ort_session_input.name == "weight":
+                        weight = np.array([1], dtype=np.double)
+                        ort_session_inputs[ort_session_input.name] = weight
+
+                output = ort_session.run(None, ort_session_inputs)[0][0]
+                restored_face = normalize_cropped_face(output)
+
+            else:  # PTH models
+
+                if "codeformer" in face_restore_model.lower():
+                    codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
+                        dim_embd=512,
+                        codebook_size=1024,
+                        n_head=8,
+                        n_layers=9,
+                        connect_list=["32", "64", "128", "256"],
+                    ).to(device)
+                    checkpoint = torch.load(model_path)["params_ema"]
+                    codeformer_net.load_state_dict(checkpoint)
+                    facerestore_model = codeformer_net.eval()
+                else:
+                    sd = comfy.utils.load_torch_file(model_path, safe_load=True)
+                    facerestore_model = model_loading.load_state_dict(sd).eval()
+                    facerestore_model.to(device)
+
+                output = facerestore_model(cropped_face_t, w=codeformer_weight)[
+                    0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
+                restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
+
+        del output
+        torch.cuda.empty_cache()
+
+    except Exception as error:
+
+        print(f"\tFailed inference: {error}", file=sys.stderr)
+        restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
+
+    if face_restore_visibility < 1:
+        restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
+
+    restored_face = restored_face.astype("uint8")
+    return restored_face, scale
 
 def get_current_faces_model():
     global SOURCE_FACES
@@ -145,7 +238,14 @@ def half_det_size(det_size):
 
 def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
     face_analyser = getAnalysisModel(det_size)
-    return face_analyser.get(img_data)
+    faces = face_analyser.get(img_data)
+
+    # Try halving det_size if no faces are found
+    if len(faces) == 0 and det_size[0] > 320 and det_size[1] > 320:
+        det_size_half = half_det_size(det_size)
+        return analyze_faces(img_data, det_size_half)
+
+    return faces
 
 def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small"):
 
@@ -177,6 +277,48 @@ def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640
         return None, 0
 
 
+# The following code is almost entirely copied from INSwapper; the only change here is that we want to use Lanczos
+# interpolation for the warpAffine call. Now that the face has been restored, Lanczos represents a good compromise
+# whether the restored face needs to be upscaled or downscaled.
+def in_swap(img, bgr_fake, M):
+    target_img = img
+    IM = cv2.invertAffineTransform(M)
+    img_white = np.full((bgr_fake.shape[0], bgr_fake.shape[1]), 255, dtype=np.float32)
+
+    # Note the use of Lanczos here; this is functionally the only change from the source code
+    bgr_fake = cv2.warpAffine(bgr_fake, IM, (target_img.shape[1], target_img.shape[0]), borderValue=0.0,
+                              flags=cv2.INTER_LANCZOS4)
+
+    img_white = cv2.warpAffine(img_white, IM, (target_img.shape[1], target_img.shape[0]), borderValue=0.0)
+    img_white[img_white > 20] = 255
+    img_mask = img_white
+    mask_h_inds, mask_w_inds = np.where(img_mask == 255)
+    mask_h = np.max(mask_h_inds) - np.min(mask_h_inds)
+    mask_w = np.max(mask_w_inds) - np.min(mask_w_inds)
+    mask_size = int(np.sqrt(mask_h * mask_w))
+    k = max(mask_size // 10, 10)
+    # k = max(mask_size//20, 6)
+    # k = 6
+    kernel = np.ones((k, k), np.uint8)
+    img_mask = cv2.erode(img_mask, kernel, iterations=1)
+    kernel = np.ones((2, 2), np.uint8)
+    k = max(mask_size // 20, 5)
+    # k = 3
+    # k = 3
+    kernel_size = (k, k)
+    blur_size = tuple(2 * i + 1 for i in kernel_size)
+    img_mask = cv2.GaussianBlur(img_mask, blur_size, 0)
+    k = 5
+    kernel_size = (k, k)
+    blur_size = tuple(2 * i + 1 for i in kernel_size)
+    img_mask /= 255
+    # img_mask = fake_diff
+    img_mask = np.reshape(img_mask, [img_mask.shape[0], img_mask.shape[1], 1])
+    fake_merged = img_mask * bgr_fake + (1 - img_mask) * target_img.astype(np.float32)
+    fake_merged = fake_merged.astype(np.uint8)
+    return fake_merged
+
+
 def swap_face(
     source_img: Union[Image.Image, None],
     target_img: Image.Image,
@@ -187,6 +329,10 @@ def swap_face(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
+    restore_immediately: bool = True,
+    face_restore_model = None,
+    face_restore_visibility = 1,
+    codeformer_weight = 0.5,
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH
     result_image = target_img
@@ -302,7 +448,16 @@ def swap_face(
                         target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target, order=faces_order[0])
                         if target_face is not None and wrong_gender == 0:
                             logger.status(f"Swapping...")
-                            result = face_swapper.get(result, target_face, source_face)
+                            if restore_immediately:
+                                logger.status(f"Immediate restore")
+                                bgr_fake, M = face_swapper.get(result, target_face, source_face, paste_back=False)
+                                bgr_fake, scale = get_restored_face(bgr_fake, face_restore_model, face_restore_visibility,
+                                                             codeformer_weight)
+                                M *= scale
+                                result = in_swap(target_img, bgr_fake, M)
+                            else:
+                                logger.status(f"Swapping as-is")
+                                result = face_swapper.get(result, target_face, source_face)
                         elif wrong_gender == 1:
                             wrong_gender = 0
                             # Keep searching for other faces if wrong gender is detected, enhancement
