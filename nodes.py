@@ -88,7 +88,6 @@ def get_restorers():
     models_path = os.path.join(models_dir, "facerestore_models/*")
     models = glob.glob(models_path)
     models = [x for x in models if (x.endswith(".pth") or x.endswith(".onnx"))]
-    fr_urls = []
     if len(models) == 0:
         fr_urls = [
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.3.pth",
