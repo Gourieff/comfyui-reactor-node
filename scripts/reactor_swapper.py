@@ -497,6 +497,10 @@ def swap_face_many(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
+    restore_immediately: bool = True,
+    face_restore_model = None,
+    face_restore_visibility = 1,
+    codeformer_weight = 0.5,
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
@@ -635,8 +639,19 @@ def swap_face_many(
                         for i, (target_img, target_face) in enumerate(zip(results, target_faces)):
                             target_face_single, wrong_gender = get_face_single(target_img, target_face, face_index=face_num, gender_target=gender_target, order=faces_order[0])
                             if target_face_single is not None and wrong_gender == 0:
+                                result = target_img
                                 logger.status(f"Swapping {i}...")
-                                result = face_swapper.get(target_img, target_face_single, source_face)
+                                if restore_immediately:
+                                    logger.status(f"Immediate restore")
+                                    bgr_fake, M = face_swapper.get(target_img, target_face_single, source_face, paste_back=False)
+                                    bgr_fake, scale = get_restored_face(bgr_fake, face_restore_model,
+                                                                        face_restore_visibility,
+                                                                        codeformer_weight)
+                                    M *= scale
+                                    result = in_swap(target_img, bgr_fake, M)
+                                else:
+                                    logger.status(f"Swapping as-is")
+                                    result = face_swapper.get(target_img, target_face_single, source_face)
                                 results[i] = result
                             elif wrong_gender == 1:
                                 wrong_gender = 0

@@ -143,6 +143,9 @@ class FaceSwapScript(scripts.Script):
                         face_model=self.face_model,
                         faces_order=self.faces_order,
                         restore_immediately=self.restore_immediately,
+                        face_restore_model=self.face_restore_model,
+                        face_restore_visibility=self.face_restore_visibility,
+                        codeformer_weight=self.codeformer_weight,
                     )
                     p.init_images = result
 
