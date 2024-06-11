@@ -17,12 +17,13 @@ from segment_anything import sam_model_registry
 
 from modules.processing import StableDiffusionProcessingImg2Img
 from modules.shared import state
-from comfy_extras.chainner_models import model_loading
+# from comfy_extras.chainner_models import model_loading
 import comfy.model_management as model_management
 import comfy.utils
 import folder_paths
 
 import scripts.reactor_version
+from r_chainner import model_loading
 from scripts.reactor_faceswap import (
     FaceSwapScript,
     get_models,
