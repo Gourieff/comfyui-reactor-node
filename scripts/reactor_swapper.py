@@ -285,9 +285,9 @@ def in_swap(img, bgr_fake, M):
     IM = cv2.invertAffineTransform(M)
     img_white = np.full((bgr_fake.shape[0], bgr_fake.shape[1]), 255, dtype=np.float32)
 
-    # Note the use of Lanczos here; this is functionally the only change from the source code
+    # Note the use of bicubic here; this is functionally the only change from the source code
     bgr_fake = cv2.warpAffine(bgr_fake, IM, (target_img.shape[1], target_img.shape[0]), borderValue=0.0,
-                              flags=cv2.INTER_LANCZOS4)
+                              flags=cv2.INTER_CUBIC)
 
     img_white = cv2.warpAffine(img_white, IM, (target_img.shape[1], target_img.shape[0]), borderValue=0.0)
     img_white[img_white > 20] = 255
