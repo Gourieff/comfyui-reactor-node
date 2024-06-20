@@ -94,7 +94,9 @@ def get_restorers():
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.3.pth",
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.4.pth",
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/codeformer-v0.1.0.pth",
-            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-512.onnx"
+            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-512.onnx",
+            "https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_1024.onnx",
+            "https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_2048.onnx",
         ]
         for model_url in fr_urls:
             model_name = os.path.basename(model_url)
@@ -133,6 +135,7 @@ class reactor:
                 "input_faces_index": ("STRING", {"default": "0"}),
                 "source_faces_index": ("STRING", {"default": "0"}),
                 "console_log_level": ([0, 1, 2], {"default": 1}),
+                "restore_immediately": ("BOOLEAN", {"default": True})
             },
             "optional": {
                 "source_image": ("IMAGE",),
@@ -148,6 +151,7 @@ class reactor:
     def __init__(self):
         self.face_helper = None
         self.faces_order = ["large-small", "large-small"]
+        self.face_size = 512
 
     def restore_face(
             self,
@@ -169,7 +173,7 @@ class reactor:
             device = model_management.get_torch_device()
 
             if "codeformer" in face_restore_model.lower():
-                
+
                 codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
                     dim_embd=512,
                     codebook_size=1024,
@@ -180,7 +184,7 @@ class reactor:
                 checkpoint = torch.load(model_path)["params_ema"]
                 codeformer_net.load_state_dict(checkpoint)
                 facerestore_model = codeformer_net.eval()
-            
+
             elif ".onnx" in face_restore_model:
 
                 ort_session = set_ort_session(model_path, providers=providers)
@@ -192,9 +196,18 @@ class reactor:
                 sd = comfy.utils.load_torch_file(model_path, safe_load=True)
                 facerestore_model = model_loading.load_state_dict(sd).eval()
                 facerestore_model.to(device)
-            
-            if self.face_helper is None:
-                self.face_helper = FaceRestoreHelper(1, face_size=512, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
+
+            faceSize = 512
+            if "1024" in face_restore_model.lower():
+                faceSize = 1024
+            elif "2048" in face_restore_model.lower():
+                faceSize = 2048
+
+            if faceSize != self.face_size or self.face_helper is None:
+                self.face_helper = FaceRestoreHelper(1, face_size=faceSize, crop_ratio=(1, 1),
+                                                     det_model=facedetection, save_ext='png', use_parse=True,
+                                                     device=device)
+                self.face_size = faceSize
 
             # print(f"result = {result.dtype}")
             # image_np = 255. * result.cpu().numpy()
@@ -241,7 +254,7 @@ class reactor:
                 self.face_helper.align_warp_face()
 
                 restored_face = None
-                
+
                 for idx, cropped_face in enumerate(self.face_helper.cropped_faces):
 
                     # if ".pth" in face_restore_model:
@@ -250,11 +263,11 @@ class reactor:
                     cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
 
                     try:
-                        
+
                         with torch.no_grad():
 
                             if ".onnx" in face_restore_model: # ONNX models
-                                
+
                                 for ort_session_input in ort_session.get_inputs():
                                     if ort_session_input.name == "input":
                                         cropped_face_prep = prepare_cropped_face(cropped_face)
@@ -262,7 +275,7 @@ class reactor:
                                     if ort_session_input.name == "weight":
                                         weight = np.array([ 1 ], dtype = np.double)
                                         ort_session_inputs[ort_session_input.name] = weight
-                                
+
                                 output = ort_session.run(None, ort_session_inputs)[0][0]
                                 restored_face = normalize_cropped_face(output)
 
@@ -273,7 +286,7 @@ class reactor:
 
                         del output
                         torch.cuda.empty_cache()
-                   
+
                     except Exception as error:
 
                         print(f"\tFailed inference: {error}", file=sys.stderr)
@@ -291,7 +304,9 @@ class reactor:
                 restored_img = restored_img[:, :, ::-1]
 
                 if original_resolution != restored_img.shape[0:2]:
-                    restored_img = cv2.resize(restored_img, (0, 0), fx=original_resolution[1]/restored_img.shape[1], fy=original_resolution[0]/restored_img.shape[0], interpolation=cv2.INTER_LINEAR)
+                    restored_img = cv2.resize(restored_img, (0, 0), fx=original_resolution[1]/restored_img.shape[1],
+                                              fy=original_resolution[0]/restored_img.shape[0],
+                                              interpolation=cv2.INTER_AREA)
 
                 self.face_helper.clean_all()
 
@@ -308,8 +323,11 @@ class reactor:
             result = restored_img_tensor
 
         return result
-
-    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None):
+    
+    def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index,
+                input_faces_index, console_log_level, face_restore_model, face_restore_visibility, codeformer_weight,
+                facedetection, restore_immediately,
+                source_image=None, face_model=None, faces_order=None):
 
         if faces_order is None:
             faces_order = self.faces_order
@@ -345,6 +363,10 @@ class reactor:
             gender_target=detect_gender_input,
             face_model=face_model,
             faces_order=faces_order,
+            restore_immediately=restore_immediately,
+            face_restore_model=face_restore_model,
+            face_restore_visibility=face_restore_visibility,
+            codeformer_weight=codeformer_weight,
         )
         result = batched_pil_to_tensor(p.init_images)
 
@@ -353,8 +375,10 @@ class reactor:
             face_model_to_provide = current_face_model[0] if (current_face_model is not None and len(current_face_model) > 0) else face_model
         else:
             face_model_to_provide = face_model
-        
-        result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection)
+
+        if not restore_immediately:
+            result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,
+                                        facedetection)
 
         return (result,face_model_to_provide)
 
@@ -623,6 +647,7 @@ class RestoreFace:
                 "model": (get_model_names(get_restorers),),
                 "visibility": ("FLOAT", {"default": 1, "min": 0.0, "max": 1, "step": 0.05}),
                 "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
+                "restore_largest": ("BOOLEAN", {"default": False, }),
             },
         }
 
@@ -632,9 +657,10 @@ class RestoreFace:
 
     def __init__(self):
         self.face_helper = None
+        self.face_size = 512
 
-    def execute(self, image, model, visibility, codeformer_weight, facedetection):
-        result = reactor.restore_face(self,image,model,visibility,codeformer_weight,facedetection)
+    def execute(self, image, model, visibility, codeformer_weight, facedetection, restore_largest):
+        result = reactor.restore_face(self,image,model,visibility,codeformer_weight,facedetection,restore_largest)
         return (result,)
 
 
