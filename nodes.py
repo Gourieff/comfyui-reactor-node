@@ -399,6 +399,9 @@ class ReActorPlusOpt:
         self.input_faces_index = "0"
         self.source_faces_index = "0"
         self.console_log_level = 1
+        self.face_size = 512
+        self.restore_immediately = False
+        self.restore = True
     
     def execute(self, enabled, input_image, swap_model, facedetection, face_restore_model, face_restore_visibility, codeformer_weight, source_image=None, face_model=None, options=None, face_boost=None):
 
