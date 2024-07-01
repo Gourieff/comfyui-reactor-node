@@ -71,6 +71,8 @@ os.makedirs(dir_facerestore_models, exist_ok=True)
 folder_paths.folder_names_and_paths["facerestore_models"] = ([dir_facerestore_models], folder_paths.supported_pt_extensions)
 
 BLENDED_FACE_MODEL = None
+FACE_SIZE: int = 512
+FACE_HELPER = None
 
 if "ultralytics" not in folder_paths.folder_names_and_paths:
     add_folder_path_and_extensions("ultralytics_bbox", [os.path.join(models_dir, "ultralytics", "bbox")], folder_paths.supported_pt_extensions)
@@ -149,9 +151,9 @@ class reactor:
     CATEGORY = "🌌 ReActor"
 
     def __init__(self):
-        self.face_helper = None
+        # self.face_helper = None
         self.faces_order = ["large-small", "large-small"]
-        self.face_size = 512
+        # self.face_size = FACE_SIZE
         self.restore_immediately = False
         self.restore = True
 
@@ -168,7 +170,17 @@ class reactor:
 
         if face_restore_model != "none" and not model_management.processing_interrupted():
 
-            logger.status(f"Restoring with {face_restore_model}")
+            global FACE_SIZE, FACE_HELPER
+
+            self.face_helper = FACE_HELPER
+            
+            faceSize = 512
+            if "1024" in face_restore_model.lower():
+                faceSize = 1024
+            elif "2048" in face_restore_model.lower():
+                faceSize = 2048
+
+            logger.status(f"Restoring with {face_restore_model} | Face Size is set to {faceSize}")
 
             model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
 
@@ -198,16 +210,11 @@ class reactor:
                 sd = comfy.utils.load_torch_file(model_path, safe_load=True)
                 facerestore_model = model_loading.load_state_dict(sd).eval()
                 facerestore_model.to(device)
-
-            faceSize = self.face_size
-            if "1024" in face_restore_model.lower():
-                faceSize = 1024
-            elif "2048" in face_restore_model.lower():
-                faceSize = 2048
             
-            if faceSize != self.face_size or self.face_helper is None:
+            if faceSize != FACE_SIZE or self.face_helper is None:
                 self.face_helper = FaceRestoreHelper(1, face_size=faceSize, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
-                self.face_size = faceSize
+                FACE_SIZE = faceSize
+                FACE_HELPER = self.face_helper
 
             image_np = 255. * result.numpy()
 
@@ -392,14 +399,14 @@ class ReActorPlusOpt:
     CATEGORY = "🌌 ReActor"
 
     def __init__(self):
-        self.face_helper = None
+        # self.face_helper = None
         self.faces_order = ["large-small", "large-small"]
         self.detect_gender_input = "no"
         self.detect_gender_source = "no"
         self.input_faces_index = "0"
         self.source_faces_index = "0"
         self.console_log_level = 1
-        self.face_size = 512
+        # self.face_size = 512
         self.restore_immediately = False
         self.restore = True
     
@@ -412,6 +419,10 @@ class ReActorPlusOpt:
             self.detect_gender_source = options["detect_gender_source"]
             self.input_faces_index = options["input_faces_index"]
             self.source_faces_index = options["source_faces_index"]
+        
+        if face_boost is not None:
+            self.restore_immediately = face_boost["enabled"]
+            self.restore = face_boost["restore_with_main_after"]
         
         result = reactor.execute(
             self,enabled,input_image,swap_model,self.detect_gender_source,self.detect_gender_input,self.source_faces_index,self.input_faces_index,self.console_log_level,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,source_image,face_model,self.faces_order, face_boost=face_boost
@@ -641,9 +652,9 @@ class RestoreFace:
     FUNCTION = "execute"
     CATEGORY = "🌌 ReActor"
 
-    def __init__(self):
-        self.face_helper = None
-        self.face_size = 512
+    # def __init__(self):
+    #     self.face_helper = None
+    #     self.face_size = 512
 
     def execute(self, image, model, visibility, codeformer_weight, facedetection):
         result = reactor.restore_face(self,image,model,visibility,codeformer_weight,facedetection)
