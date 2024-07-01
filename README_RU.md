@@ -66,7 +66,10 @@
 
 - Некоторые исправления и улучшения
 
-### 0.5.0 <sub><sup>BETA4</sup></sub>
+<details>
+	<summary><a>Предыдущие версии</a></summary>
+
+### [0.5.0 <sub><sup>BETA4</sup></sub>](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.5.0)
 
 - Поддержка библиотеки Spandrel при работе с GFPGAN
 
@@ -113,9 +116,6 @@ Basic workflow [💾](https://github.com/Gourieff/Assets/blob/main/comfyui-react
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.0-whatsnew-04.jpg?raw=true" alt="0.5.0-whatsnew-04" width="100%"/>
 
 - Небольшое улучшение скорости анализа целевых изображений (input)
-
-<details>
-	<summary><a>Предыдущие версии</a></summary>
 
 ### [0.4.2](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.4.2)
 

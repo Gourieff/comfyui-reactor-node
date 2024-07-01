@@ -69,7 +69,7 @@
 <details>
 	<summary><a>Previous versions</a></summary>
 
-### 0.5.0 <sub><sup>BETA4</sup></sub>
+### [0.5.0 <sub><sup>BETA4</sup></sub>](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.5.0)
 
 - Spandrel lib support for GFPGAN
 
