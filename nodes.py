@@ -95,8 +95,8 @@ def get_restorers():
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GFPGANv1.4.pth",
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/codeformer-v0.1.0.pth",
             "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-512.onnx",
-            "https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_1024.onnx",
-            "https://github.com/facefusion/facefusion-assets/releases/download/models/gpen_bfr_2048.onnx",
+            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-1024.onnx",
+            "https://huggingface.co/datasets/Gourieff/ReActor/resolve/main/models/facerestore_models/GPEN-BFR-2048.onnx",
         ]
         for model_url in fr_urls:
             model_name = os.path.basename(model_url)
