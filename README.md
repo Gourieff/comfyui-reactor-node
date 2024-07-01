@@ -55,6 +55,14 @@
 
 ## What's new in the latest update
 
+### 0.5.0 <sub><sup>BETA4</sup></sub>
+
+- Spandrel lib support for GFPGAN
+
+### 0.5.0 <sub><sup>BETA3</sup></sub>
+
+- Fixes: "RAM issue", "No detection" for MaskingHelper
+
 ### 0.5.0 <sub><sup>BETA2</sup></sub>
 
 - You can now build a blended face model from a batch of face models you already have, just add the "Make Face Model Batch" node to your workflow and connect several models via "Load Face Model"
