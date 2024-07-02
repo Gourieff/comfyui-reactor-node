@@ -156,6 +156,10 @@ class reactor:
         # self.face_size = FACE_SIZE
         self.restore_immediately = False
         self.restore = True
+        self.boost_model = None
+        self.interpolation = "Bicubic"
+        self.boost_model_visibility = 1
+        self.boost_cf_weight = 0.5
 
     def restore_face(
             self,
