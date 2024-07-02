@@ -231,6 +231,7 @@ https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_mo
    - ReActorFaceSwap (Основной нод)
    - ReActorFaceSwapOpt (Основной нод с доп. входом Options)
    - ReActorOptions (Опции для ReActorFaceSwapOpt)
+   - ReActorFaceBoost (Нод Face Booster)
    - ReActorMaskHelper (Masking Helper)
 - ••• Operations with Face Models •••
   - ReActorSaveFaceModel (Save Face Model)

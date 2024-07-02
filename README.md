@@ -227,6 +227,7 @@ List of Nodes:
    - ReActorFaceSwap (Main Node)
    - ReActorFaceSwapOpt (Main Node with the additional Options input)
    - ReActorOptions (Options for ReActorFaceSwapOpt)
+   - ReActorFaceBoost (Face Booster Node)
    - ReActorMaskHelper (Masking Helper)
 - ••• Operations with Face Models •••
   - ReActorSaveFaceModel (Save Face Model)
