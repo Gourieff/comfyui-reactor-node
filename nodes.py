@@ -110,9 +110,11 @@ def get_restorers():
 
 def get_model_names(get_models):
     models = get_models()
-    names = ["none"]
+    names = []
     for x in models:
         names.append(os.path.basename(x))
+    names.sort(key=str.lower)
+    names.insert(0, "none")
     return names
 
 def model_names():
