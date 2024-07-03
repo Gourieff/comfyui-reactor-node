@@ -415,6 +415,10 @@ class ReActorPlusOpt:
         # self.face_size = 512
         self.face_boost_enabled = False
         self.restore = True
+        self.boost_model = None
+        self.interpolation = "Bicubic"
+        self.boost_model_visibility = 1
+        self.boost_cf_weight = 0.5
     
     def execute(self, enabled, input_image, swap_model, facedetection, face_restore_model, face_restore_visibility, codeformer_weight, source_image=None, face_model=None, options=None, face_boost=None):
 
