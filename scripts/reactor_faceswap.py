@@ -46,7 +46,7 @@ class FaceSwapScript(scripts.Script):
         gender_target,
         face_model,
         faces_order,
-        restore_immediately,
+        face_boost_enabled,
         face_restore_model,
         face_restore_visibility,
         codeformer_weight,
@@ -62,7 +62,7 @@ class FaceSwapScript(scripts.Script):
             self.model = model
             self.face_model = face_model
             self.faces_order = faces_order
-            self.restore_immediately = restore_immediately
+            self.face_boost_enabled = face_boost_enabled
             self.face_restore_model = face_restore_model
             self.face_restore_visibility = face_restore_visibility
             self.codeformer_weight = codeformer_weight
@@ -108,7 +108,7 @@ class FaceSwapScript(scripts.Script):
                         gender_target=self.gender_target,
                         face_model=self.face_model,
                         faces_order=self.faces_order,
-                        restore_immediately=self.restore_immediately,
+                        face_boost_enabled=self.face_boost_enabled,
                         face_restore_model=self.face_restore_model,
                         face_restore_visibility=self.face_restore_visibility,
                         codeformer_weight=self.codeformer_weight,
@@ -145,7 +145,7 @@ class FaceSwapScript(scripts.Script):
                         gender_target=self.gender_target,
                         face_model=self.face_model,
                         faces_order=self.faces_order,
-                        restore_immediately=self.restore_immediately,
+                        face_boost_enabled=self.face_boost_enabled,
                         face_restore_model=self.face_restore_model,
                         face_restore_visibility=self.face_restore_visibility,
                         codeformer_weight=self.codeformer_weight,

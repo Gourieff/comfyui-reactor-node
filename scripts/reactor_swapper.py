@@ -198,7 +198,7 @@ def swap_face(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
-    restore_immediately: bool = True,
+    face_boost_enabled: bool = False,
     face_restore_model = None,
     face_restore_visibility: int = 1,
     codeformer_weight: float = 0.5,
@@ -318,7 +318,7 @@ def swap_face(
                         target_face, wrong_gender = get_face_single(target_img, target_faces, face_index=face_num, gender_target=gender_target, order=faces_order[0])
                         if target_face is not None and wrong_gender == 0:
                             logger.status(f"Swapping...")
-                            if restore_immediately:
+                            if face_boost_enabled:
                                 logger.status(f"Face Boost is enabled")
                                 bgr_fake, M = face_swapper.get(result, target_face, source_face, paste_back=False)
                                 bgr_fake, scale = restorer.get_restored_face(bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)
@@ -366,7 +366,7 @@ def swap_face_many(
     gender_target: int = 0,
     face_model: Union[Face, None] = None,
     faces_order: List = ["large-small", "large-small"],
-    restore_immediately: bool = True,
+    face_boost_enabled: bool = False,
     face_restore_model = None,
     face_restore_visibility: int = 1,
     codeformer_weight: float = 0.5,
@@ -511,7 +511,7 @@ def swap_face_many(
                             if target_face_single is not None and wrong_gender == 0:
                                 result = target_img
                                 logger.status(f"Swapping {i}...")
-                                if restore_immediately:
+                                if face_boost_enabled:
                                     logger.status(f"Face Boost is enabled")
                                     bgr_fake, M = face_swapper.get(target_img, target_face_single, source_face, paste_back=False)
                                     bgr_fake, scale = restorer.get_restored_face(bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)

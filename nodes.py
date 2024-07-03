@@ -154,7 +154,7 @@ class reactor:
         # self.face_helper = None
         self.faces_order = ["large-small", "large-small"]
         # self.face_size = FACE_SIZE
-        self.restore_immediately = False
+        self.face_boost_enabled = False
         self.restore = True
         self.boost_model = None
         self.interpolation = "Bicubic"
@@ -315,12 +315,14 @@ class reactor:
     def execute(self, enabled, input_image, swap_model, detect_gender_source, detect_gender_input, source_faces_index, input_faces_index, console_log_level, face_restore_model,face_restore_visibility, codeformer_weight, facedetection, source_image=None, face_model=None, faces_order=None, face_boost=None):
 
         if face_boost is not None:
-            self.restore_immediately = face_boost["enabled"]
+            self.face_boost_enabled = face_boost["enabled"]
             self.boost_model = face_boost["boost_model"]
             self.interpolation = face_boost["interpolation"]
             self.boost_model_visibility = face_boost["visibility"]
             self.boost_cf_weight = face_boost["codeformer_weight"]
             self.restore = face_boost["restore_with_main_after"]
+        else:
+            self.face_boost_enabled = False
 
         if faces_order is None:
             faces_order = self.faces_order
@@ -357,7 +359,7 @@ class reactor:
             face_model=face_model,
             faces_order=faces_order,
             # face boost:
-            restore_immediately=self.restore_immediately,
+            face_boost_enabled=self.face_boost_enabled,
             face_restore_model=self.boost_model,
             face_restore_visibility=self.boost_model_visibility,
             codeformer_weight=self.boost_cf_weight,
@@ -371,7 +373,7 @@ class reactor:
         else:
             face_model_to_provide = face_model
 
-        if self.restore or not self.restore_immediately:
+        if self.restore or not self.face_boost_enabled:
             result = reactor.restore_face(self,result,face_restore_model,face_restore_visibility,codeformer_weight,facedetection)
 
         return (result,face_model_to_provide)
@@ -411,7 +413,7 @@ class ReActorPlusOpt:
         self.source_faces_index = "0"
         self.console_log_level = 1
         # self.face_size = 512
-        self.restore_immediately = False
+        self.face_boost_enabled = False
         self.restore = True
     
     def execute(self, enabled, input_image, swap_model, facedetection, face_restore_model, face_restore_visibility, codeformer_weight, source_image=None, face_model=None, options=None, face_boost=None):
@@ -425,8 +427,10 @@ class ReActorPlusOpt:
             self.source_faces_index = options["source_faces_index"]
         
         if face_boost is not None:
-            self.restore_immediately = face_boost["enabled"]
+            self.face_boost_enabled = face_boost["enabled"]
             self.restore = face_boost["restore_with_main_after"]
+        else:
+            self.face_boost_enabled = False
         
         result = reactor.execute(
             self,enabled,input_image,swap_model,self.detect_gender_source,self.detect_gender_input,self.source_faces_index,self.input_faces_index,self.console_log_level,face_restore_model,face_restore_visibility,codeformer_weight,facedetection,source_image,face_model,self.faces_order, face_boost=face_boost
