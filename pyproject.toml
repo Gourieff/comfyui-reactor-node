@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-reactor-node"
 description = "The Fast and Simple Face Swap Extension Node for ComfyUI, based on ReActor SD-WebUI Face Swap Extension"
-version = "0.5.1-a7"
+version = "0.5.1-b2"
 license = { file = "LICENSE" }
 dependencies = ["insightface==0.7.3", "onnx>=1.14.0", "opencv-python>=4.7.0.72", "numpy", "segment_anything"]
 
