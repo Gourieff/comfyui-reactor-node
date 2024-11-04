@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import multiprocessing
 import os, glob, sys
 import logging
 
@@ -21,7 +23,9 @@ from modules.shared import state
 import comfy.model_management as model_management
 import comfy.utils
 import folder_paths
+from transformers import AutoModelForImageClassification, AutoFeatureExtractor
 
+from scripts.reactor_swapper import getAnalysisModel
 import scripts.reactor_version
 from r_chainner import model_loading
 from scripts.reactor_faceswap import (
@@ -281,7 +285,7 @@ class reactor:
 
                     except Exception as error:
 
-                        print(f"\tFailed inference: {error}", file=sys.stderr)
+                        logger.debug(f"\tFailed inference: {error}", file=sys.stderr)
                         restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
 
                     if face_restore_visibility < 1:
@@ -380,7 +384,457 @@ class reactor:
 
         return (result,face_model_to_provide)
 
+class reactorGroup:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "enabled": ("BOOLEAN", {"default": True, "label_off": "OFF", "label_on": "ON"}),
+                "input_image": ("IMAGE",),
+                "swap_model": (list(model_names().keys()),),
+                "facedetection": (["retinaface_resnet50", "retinaface_mobile0.25", "YOLOv5l", "YOLOv5n"],),
+                "face_restore_model": (get_model_names(get_restorers),),
+                "face_restore_visibility": ("FLOAT", {"default": 1, "min": 0.1, "max": 1, "step": 0.05}),
+                "codeformer_weight": ("FLOAT", {"default": 0.5, "min": 0.0, "max": 1, "step": 0.05}),
+                "same_gender": ("BOOLEAN", {"default": False, "label_off": "OFF", "label_on": "ON"}),
+                # "multithreading_enabled": ("BOOLEAN", {"default": False, "label_off": "OFF", "label_on": "ON"}),
+                # "max_concurrent_threads": ("INT", {"default": 4, "min": 1, "max": multiprocessing.cpu_count()}),
+            },
+            "optional": {
+                "source_image": ("IMAGE",),
+                "face_model": ("FACE_MODEL",),
+                "face_boost": ("FACE_BOOST",),
+            },
+            "hidden": {"faces_order": "FACES_ORDER", "console_log_level": ([0, 1, 2], {"default": 1})},
+        }
 
+    RETURN_TYPES = ("IMAGE", "FACE_MODEL")
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def __init__(self):
+        self.faces_order = ["large-small", "large-small"]
+        self.face_boost_enabled = False
+        self.restore = True
+        self.boost_model = None
+        self.interpolation = "Bicubic"
+        self.boost_model_visibility = 1
+        self.boost_cf_weight = 0.5
+
+        self.face_detector, self.gender_model, self.feature_extractor = self.load_models()
+
+    def execute(self, enabled, input_image, swap_model, face_restore_model, face_restore_visibility, codeformer_weight, facedetection, same_gender=True, source_image=None, face_model=None, faces_order=None, face_boost=None, console_log_level=1): #multithreading_enabled, max_concurrent_threads,
+        if not enabled:
+            logger.debug("Deepfake not enabled.")
+            return (input_image, face_model)
+        elif source_image is None and face_model is None:
+            logger.debug("Source image or face model not provided.")
+            return (input_image, face_model)
+
+        # Convert input and source images to OpenCV format
+        cv_target_image = cv2.cvtColor(np.array(batch_tensor_to_pil(input_image)[0]), cv2.COLOR_RGB2BGR)
+        cv_source_image = cv2.cvtColor(np.array(tensor_to_pil(source_image)), cv2.COLOR_RGB2BGR) if source_image is not None else None
+
+        det_size = (640, 640)
+
+        # Analyze faces in target and source images
+        target_faces = self.analyze_faces(cv_target_image, det_size)
+        source_faces = self.analyze_faces(cv_source_image, det_size) if cv_source_image is not None else []
+
+        # Separate faces by gender if `same_gender` is True
+        if same_gender:
+            target_faces_male = self.sort_faces_by_gender(target_faces, "male")
+            target_faces_female = self.sort_faces_by_gender(target_faces, "female")
+            source_faces_male = self.sort_faces_by_gender(source_faces, "male")
+            source_faces_female = self.sort_faces_by_gender(source_faces, "female")
+        else:
+            target_faces_male, target_faces_female = target_faces, []
+            source_faces_male, source_faces_female = source_faces, []
+
+        # Helper to process gender-separated faces
+        def process_faces_by_gender(target_faces, source_faces, gender_label):
+            faces_to_process = [(idx, target_face, source_faces[idx % len(source_faces)]) for idx, target_face in enumerate(target_faces) if source_faces]
+            processed_faces = []
+
+            # if multithreading_enabled:
+            #     logger.debug(f"Multithreading enabled for {gender_label} faces: processing with up to {max_concurrent_threads} threads.")
+            #     with ThreadPoolExecutor(max_workers=max_concurrent_threads) as executor:
+            #         future_to_face = {
+            #             executor.submit(self.process_and_restore_face, face_data, swap_model, face_model, face_restore_model, face_restore_visibility, codeformer_weight, facedetection): face_data
+            #             for face_data in faces_to_process
+            #         }
+            #         for future in as_completed(future_to_face):
+            #             try:
+            #                 processed_face, bbox = future.result()
+            #                 processed_faces.append((processed_face, bbox))
+            #             except Exception as exc:
+            #                 logger.debug(f"{gender_label.capitalize()} face processing generated an exception: {exc}")
+            # else:
+            for face_data in faces_to_process:
+                processed_face, bbox = self.process_and_restore_face(face_data, swap_model, face_model, face_restore_model, face_restore_visibility, codeformer_weight, facedetection)
+                processed_faces.append((processed_face, bbox))
+            return processed_faces
+
+        # Process male and female faces separately
+        processed_faces_male = process_faces_by_gender(target_faces_male, source_faces_male, "male")
+        processed_faces_female = process_faces_by_gender(target_faces_female, source_faces_female, "female")
+
+        # Combine all processed faces
+        all_processed_faces = processed_faces_male + processed_faces_female
+
+        # Blend all processed faces back into the target image
+        for processed_face, bbox in all_processed_faces:
+            cv_target_image = self.blend_face_into_image(cv_target_image, processed_face, bbox)
+
+        # Convert the final image back to the expected output format
+        final_result = batched_pil_to_tensor([Image.fromarray(cv2.cvtColor(cv_target_image, cv2.COLOR_BGR2RGB))])
+        return (final_result, face_model)
+
+    def process_and_restore_face(self, face_data, swap_model, face_model, face_restore_model, face_restore_visibility, codeformer_weight, facedetection):
+        """Process and restore a face for multithreading."""
+        idx, target_face, source_face = face_data
+        if target_face and source_face:  # Ensure target_face and source_face are not None
+            processed_face = self.process_face(
+                enabled=True,
+                target_face=[target_face["face_image"]],
+                source_face=source_face["face_image"],
+                swap_model=swap_model,
+                face_model=face_model,
+                face_restore_model=face_restore_model,
+                face_restore_visibility=face_restore_visibility,
+                codeformer_weight=codeformer_weight,
+                facedetection=facedetection
+            )
+
+            # Restore processed face
+            if processed_face is not None:
+                restored_face = self.restore_face(
+                    processed_face,
+                    face_restore_model,
+                    face_restore_visibility,
+                    codeformer_weight,
+                    facedetection
+                )
+                return restored_face, target_face["bbox"]
+        raise ValueError("One of the faces is missing in process_and_restore_face.")
+
+    def blend_face_into_image(self, target_image, face_image, bbox):
+        """Blends face_image back into target_image at the location specified by bbox."""
+        x1, y1, x2, y2 = bbox
+        
+        # Check and process face_image to ensure it is compatible
+        if isinstance(face_image, torch.Tensor):
+            # Squeeze extra dimensions if necessary
+            face_image = face_image.squeeze()
+            if face_image.dim() == 3 and face_image.shape[0] == 3:
+                # Rearrange dimensions if in (C, H, W) format
+                face_image = face_image.permute(1, 2, 0)
+            face_image = face_image.cpu().numpy()  # Convert to NumPy
+            face_image = (face_image * 255).astype(np.uint8)  # Convert to uint8 if necessary
+        
+        # Ensure face_image is now a 3D array (H, W, 3) and is uint8
+        if face_image.ndim != 3 or face_image.shape[2] != 3 or face_image.dtype != np.uint8:
+            raise ValueError(f"Invalid face image format: shape={face_image.shape}, dtype={face_image.dtype}")
+
+        # Convert to PIL Image for resizing
+        face_image = Image.fromarray(face_image)
+        
+        # Resize face_image to fit the bounding box
+        face_resized = face_image.resize((x2 - x1, y2 - y1))
+        
+        # Convert resized face back to a NumPy array in BGR format for OpenCV
+        face_resized = np.array(face_resized)[:, :, ::-1]  # RGB to BGR
+
+        # Paste the face into the target image at the bounding box location
+        target_image[y1:y2, x1:x2] = face_resized
+        return target_image
+
+    def sort_faces_by_gender(self, faces, gender_preference):
+        """Sort and return faces based on the specified gender preference."""
+        if gender_preference == "male":
+            sorted_faces = [face for face in faces if face.get("gender") == "male"]
+        elif gender_preference == "female":
+            sorted_faces = [face for face in faces if face.get("gender") == "female"]
+        elif gender_preference == "same_gender":
+            sorted_faces = faces  # Assuming all are sorted based on same_gender setting
+        else:
+            sorted_faces = faces  # No sorting if 'no' is specified
+        return sorted_faces
+
+    def process_face(self, enabled, target_face, source_face, swap_model, face_model, face_restore_model, face_restore_visibility, codeformer_weight, facedetection):
+        # Process each individual face using FaceSwapScript (similar to single-face deepfake)
+        script = FaceSwapScript()
+        p = StableDiffusionProcessingImg2Img(target_face)
+
+        # Call process with the required parameters
+        script.process(
+            p=p,
+            img=source_face,
+            enable=enabled,
+            model=swap_model,
+            swap_in_source=True,
+            swap_in_generated=True,
+            gender_source="no",
+            gender_target="no",
+            faces_index="0",
+            source_faces_index="0",
+            face_model=face_model,
+            faces_order=self.faces_order,
+            face_boost_enabled=self.face_boost_enabled,
+            face_restore_model=face_restore_model,
+            face_restore_visibility=face_restore_visibility,
+            codeformer_weight=codeformer_weight,
+            interpolation=self.interpolation
+        )
+        deepfaked_face = batched_pil_to_tensor(p.init_images)  # Retrieve the first image
+
+        if self.restore:
+            deepfaked_face = self.restore_face(deepfaked_face, face_restore_model, face_restore_visibility, codeformer_weight, facedetection)
+            logger.debug("Restored face post-swap")
+
+        logger.debug("Returning processed face for target.")
+        return deepfaked_face
+    
+
+
+    @staticmethod
+    def load_models():
+        """Load and return the face detector and gender detection models."""
+        # Face detection model (assuming getAnalysisModel is defined elsewhere)
+        face_detector = getAnalysisModel
+
+        # Gender detection model
+        model_name = 'rizvandwiki/gender-classification'
+        gender_model = AutoModelForImageClassification.from_pretrained(model_name)
+        feature_extractor = AutoFeatureExtractor.from_pretrained(model_name)
+
+        return face_detector, gender_model, feature_extractor
+
+    def detect_gender(self, face_image: np.ndarray) -> str:
+        """Detect gender of a face image using the gender detection model."""
+        try:
+            # Convert image to RGB format expected by the model
+            face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+            # Prepare the image for the gender model
+            inputs = self.feature_extractor(images=face_image_rgb, return_tensors="pt")
+            with torch.no_grad():
+                outputs = self.gender_model(**inputs)
+            logits = outputs.logits
+            predicted_class_idx = logits.argmax(-1).item()
+
+            # Convert index to label
+            label = self.gender_model.config.id2label[predicted_class_idx]
+            return label.lower()
+        except Exception as e:
+            logger.error(f"Error while detecting gender: {e}")
+            return 'male'  # Default to 'male' on error
+
+    def analyze_faces(self, img_data: np.ndarray, det_size=(640, 640)):
+        """Detect faces and return bounding boxes with a 20-pixel margin and gender information."""
+        # Initialize face detection model
+        face_analyser = self.face_detector(det_size)
+        faces = face_analyser.get(img_data)  # Face detection
+
+        # If no faces are found, try resizing the image to improve detection
+        if len(faces) == 0 and det_size[0] > 320 and det_size[1] > 320:
+            det_size_half = (det_size[0] // 2, det_size[1] // 2)
+            img_data_small = cv2.resize(img_data, det_size_half, interpolation=cv2.INTER_AREA)
+            faces = face_analyser.get(img_data_small)
+
+        # Image dimensions
+        img_height, img_width = img_data.shape[:2]
+        margin = 30  # Margin in pixels
+
+        # Structure detected faces into expected format with gender classification and bounding box margin
+        results = []
+        for face in faces:
+            bbox = face.bbox.astype(int)
+            x1, y1, x2, y2 = bbox
+
+            # Apply margin while staying within image bounds
+            x1 = max(0, x1 - margin)
+            y1 = max(0, y1 - margin)
+            x2 = min(img_width, x2 + margin)
+            y2 = min(img_height, y2 + margin)
+
+            # Extract face region and check if region is valid
+            face_image = img_data[y1:y2, x1:x2]
+            if face_image.size == 0:
+                continue
+
+            # Detect gender for each face region
+            face_image_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
+            gender_label = self.detect_gender(face_image)
+
+            # Structure face data with bounding box and gender
+            face_info = {
+                "face_image": Image.fromarray(face_image_rgb),  # Convert face to PIL Image
+                "bbox": (x1, y1, x2, y2),  # Bounding box with margin applied
+                "gender": gender_label,  # Gender label
+            }
+            results.append(face_info)
+
+        if not results:
+            logger.debug("No faces detected with provided settings.")
+        else:
+            logger.debug(f"Detected {len(results)} faces with gender classification and bounding box margin.")
+
+        return results
+
+
+    def restore_face(
+            self,
+            input_image,
+            face_restore_model,
+            face_restore_visibility,
+            codeformer_weight,
+            facedetection,
+        ):
+
+        result = input_image
+
+        if face_restore_model != "none" and not model_management.processing_interrupted():
+
+            global FACE_SIZE, FACE_HELPER
+
+            self.face_helper = FACE_HELPER
+            
+            faceSize = 512
+            if "1024" in face_restore_model.lower():
+                faceSize = 1024
+            elif "2048" in face_restore_model.lower():
+                faceSize = 2048
+
+            logger.status(f"Restoring with {face_restore_model} | Face Size is set to {faceSize}")
+
+            model_path = folder_paths.get_full_path("facerestore_models", face_restore_model)
+
+            device = model_management.get_torch_device()
+
+            if "codeformer" in face_restore_model.lower():
+
+                codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
+                    dim_embd=512,
+                    codebook_size=1024,
+                    n_head=8,
+                    n_layers=9,
+                    connect_list=["32", "64", "128", "256"],
+                ).to(device)
+                checkpoint = torch.load(model_path)["params_ema"]
+                codeformer_net.load_state_dict(checkpoint)
+                facerestore_model = codeformer_net.eval()
+
+            elif ".onnx" in face_restore_model:
+
+                ort_session = set_ort_session(model_path, providers=providers)
+                ort_session_inputs = {}
+                facerestore_model = ort_session
+
+            else:
+
+                sd = comfy.utils.load_torch_file(model_path, safe_load=True)
+                facerestore_model = model_loading.load_state_dict(sd).eval()
+                facerestore_model.to(device)
+            
+            if faceSize != FACE_SIZE or self.face_helper is None:
+                self.face_helper = FaceRestoreHelper(1, face_size=faceSize, crop_ratio=(1, 1), det_model=facedetection, save_ext='png', use_parse=True, device=device)
+                FACE_SIZE = faceSize
+                FACE_HELPER = self.face_helper
+
+            image_np = 255. * result.numpy()
+
+            total_images = image_np.shape[0]
+
+            out_images = []
+
+            for i in range(total_images):
+
+                if total_images > 1:
+                    logger.status(f"Restoring {i+1}")
+
+                cur_image_np = image_np[i,:, :, ::-1]
+
+                original_resolution = cur_image_np.shape[0:2]
+
+                if facerestore_model is None or self.face_helper is None:
+                    return result
+
+                self.face_helper.clean_all()
+                self.face_helper.read_image(cur_image_np)
+                self.face_helper.get_face_landmarks_5(only_center_face=False, resize=640, eye_dist_threshold=5)
+                self.face_helper.align_warp_face()
+
+                restored_face = None
+
+                for idx, cropped_face in enumerate(self.face_helper.cropped_faces):
+
+                    # if ".pth" in face_restore_model:
+                    cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
+                    normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
+                    cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
+
+                    try:
+
+                        with torch.no_grad():
+
+                            if ".onnx" in face_restore_model: # ONNX models
+
+                                for ort_session_input in ort_session.get_inputs():
+                                    if ort_session_input.name == "input":
+                                        cropped_face_prep = prepare_cropped_face(cropped_face)
+                                        ort_session_inputs[ort_session_input.name] = cropped_face_prep
+                                    if ort_session_input.name == "weight":
+                                        weight = np.array([ 1 ], dtype = np.double)
+                                        ort_session_inputs[ort_session_input.name] = weight
+
+                                output = ort_session.run(None, ort_session_inputs)[0][0]
+                                restored_face = normalize_cropped_face(output)
+
+                            else: # PTH models
+
+                                output = facerestore_model(cropped_face_t, w=codeformer_weight)[0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
+                                restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
+
+                        del output
+                        torch.cuda.empty_cache()
+
+                    except Exception as error:
+
+                        logger.debug(f"\tFailed inference: {error}", file=sys.stderr)
+                        restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
+
+                    if face_restore_visibility < 1:
+                        restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
+
+                    restored_face = restored_face.astype("uint8")
+                    self.face_helper.add_restored_face(restored_face)
+
+                self.face_helper.get_inverse_affine(None)
+
+                restored_img = self.face_helper.paste_faces_to_input_image()
+                restored_img = restored_img[:, :, ::-1]
+
+                if original_resolution != restored_img.shape[0:2]:
+                    restored_img = cv2.resize(restored_img, (0, 0), fx=original_resolution[1]/restored_img.shape[1], fy=original_resolution[0]/restored_img.shape[0], interpolation=cv2.INTER_AREA)
+
+                self.face_helper.clean_all()
+
+                # out_images[i] = restored_img
+                out_images.append(restored_img)
+
+                if state.interrupted or model_management.processing_interrupted():
+                    logger.status("Interrupted by User")
+                    return input_image
+
+            restored_img_np = np.array(out_images).astype(np.float32) / 255.0
+            restored_img_tensor = torch.from_numpy(restored_img_np)
+
+            result = restored_img_tensor
+
+        return result
+
+    
+    
 class ReActorPlusOpt:
     @classmethod
     def INPUT_TYPES(s):
@@ -505,11 +959,11 @@ class BuildFaceModel:
         face_model = analyze_faces(image, det_size)
 
         if len(face_model) == 0:
-            print("")
+            logger.debug("")
             det_size_half = half_det_size(det_size)
             face_model = analyze_faces(image, det_size_half)
             if face_model is not None and len(face_model) > 0:
-                print("...........................................................", end=" ")
+                logger.debug("...........................................................", end=" ")
         
         if face_model is not None and len(face_model) > 0:
             return face_model[0]
@@ -545,7 +999,7 @@ class BuildFaceModel:
                         logger.error(f"No faces found in image {i+1}, skipping")
                         continue
                     else:
-                        print(f"{int(((i+1)/n)*100)}%")
+                        logger.debug(f"{int(((i+1)/n)*100)}%")
                     faces.append(face)
                     embeddings.append(face.embedding)
             
@@ -561,7 +1015,7 @@ class BuildFaceModel:
                         logger.error(f"No faces found for face_model {i+1}, skipping")
                         continue
                     else:
-                        print(f"{int(((i+1)/n)*100)}%")
+                        logger.debug(f"{int(((i+1)/n)*100)}%")
                     faces.append(face)
                     embeddings.append(face.embedding)
 
@@ -1181,6 +1635,7 @@ class ReActorFaceBoost:
 NODE_CLASS_MAPPINGS = {
     # --- MAIN NODES ---
     "ReActorFaceSwap": reactor,
+    "ReActorGroupFaceSwap": reactorGroup,
     "ReActorFaceSwapOpt": ReActorPlusOpt,
     "ReActorOptions": ReActorOptions,
     "ReActorFaceBoost": ReActorFaceBoost,
@@ -1199,6 +1654,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     # --- MAIN NODES ---
     "ReActorFaceSwap": "ReActor 🌌 Fast Face Swap",
+    "ReActorGroupFaceSwap": "ReActor 🌌 Fast Group Face Swap",
     "ReActorFaceSwapOpt": "ReActor 🌌 Fast Face Swap [OPTIONS]",
     "ReActorOptions": "ReActor 🌌 Options",
     "ReActorFaceBoost": "ReActor 🌌 Face Booster",
@@ -1213,3 +1669,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorImageDublicator": "Image Dublicator (List) 🌌 ReActor",
     "ImageRGBA2RGB": "Convert RGBA to RGB 🌌 ReActor",
 }
+
