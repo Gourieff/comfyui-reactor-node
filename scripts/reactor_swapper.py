@@ -69,6 +69,21 @@ TARGET_IMAGE_HASH = None
 TARGET_FACES_LIST = []
 TARGET_IMAGE_LIST_HASH = []
 
+def unload_model(model):
+    if model is not None:
+        # check if model has unload method
+        # if "unload" in model:
+        #     model.unload()
+        # if "model_unload" in model:
+        #     model.model_unload()
+        del model
+    return None
+
+def unload_all_models():
+    global FS_MODEL, CURRENT_FS_MODEL_PATH
+    FS_MODEL = unload_model(FS_MODEL)
+    ANALYSIS_MODELS["320"] = unload_model(ANALYSIS_MODELS["320"])
+    ANALYSIS_MODELS["640"] = unload_model(ANALYSIS_MODELS["640"])
 
 def get_current_faces_model():
     global SOURCE_FACES
@@ -88,8 +103,9 @@ def getAnalysisModel(det_size = (640, 640)):
 def getFaceSwapModel(model_path: str):
     global FS_MODEL
     global CURRENT_FS_MODEL_PATH
-    if CURRENT_FS_MODEL_PATH is None or CURRENT_FS_MODEL_PATH != model_path:
+    if FS_MODEL is None or CURRENT_FS_MODEL_PATH is None or CURRENT_FS_MODEL_PATH != model_path:
         CURRENT_FS_MODEL_PATH = model_path
+        FS_MODEL = unload_model(FS_MODEL)
         FS_MODEL = insightface.model_zoo.get_model(model_path, providers=providers)
 
     return FS_MODEL
