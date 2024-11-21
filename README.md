@@ -2,18 +2,18 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.5.1_beta2-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.5.1-brightgreen?style=for-the-badge&labelColor=darkgreen)
 
-  <sup>
+  <!--<sup>
   <font color=brightred>
 
   ## !!! [Important Update](#latestupdate) !!!<br>Don't forget to add the Node again in existing workflows
   
   </font>
-  </sup>
+  </sup>-->
   
   <a href="https://boosty.to/artgourieff" target="_blank">
-    <img src="https://lovemet.ru/www/boosty.jpg" width="108" alt="Support Me on Boosty"/>
+    <img src="https://lovemet.ru/img/boosty.jpg" width="108" alt="Support Me on Boosty"/>
     <br>
     <sup>
       Support This Project
@@ -55,7 +55,7 @@
 
 ## What's new in the latest update
 
-### 0.5.1 <sub><sup>ALPHA1</sup></sub>
+### 0.5.1
 
 - Support of GPEN 1024/2048 restoration models (available in the HF dataset https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models)
 - ReActorFaceBoost Node - an attempt to improve the quality of swapped faces. The idea is to restore and scale the swapped face (according to the `face_size` parameter of the restoration model) BEFORE pasting it to the target image (via inswapper algorithms), more information is [here (PR#321)](https://github.com/Gourieff/comfyui-reactor-node/pull/321)
@@ -64,7 +64,8 @@
 
 [Full size demo preview](https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.1-whatsnew-02.png)
 
-- Some fixes and improvements
+- Sorting facemodels alphabetically
+- A lot of fixes and improvements
 
 <details>
 	<summary><a>Previous versions</a></summary>
