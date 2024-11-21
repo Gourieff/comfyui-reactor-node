@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_EN.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/node_version-0.5.1-brightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/node_version-0.5.2_alpha1-lightgreen?style=for-the-badge&labelColor=darkgreen)
 
   <!--<sup>
   <font color=brightred>
@@ -55,6 +55,15 @@
 
 ## What's new in the latest update
 
+### 0.5.2 <sub><sup>ALPHA1</sup></sub>
+
+- New node "Unload ReActor Models" - is useful for complex WFs when you need to free some VRAM utilized by ReActor
+- Support of ORT CoreML and ROCM EPs, just install onnxruntime version you need
+- Install script improvements to install latest versions of ORT-GPU
+
+<details>
+	<summary><a>Previous versions</a></summary>
+
 ### 0.5.1
 
 - Support of GPEN 1024/2048 restoration models (available in the HF dataset https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models)
@@ -66,9 +75,6 @@
 
 - Sorting facemodels alphabetically
 - A lot of fixes and improvements
-
-<details>
-	<summary><a>Previous versions</a></summary>
 
 ### [0.5.0 <sub><sup>BETA4</sup></sub>](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.5.0)
 
