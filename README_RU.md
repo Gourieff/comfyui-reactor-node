@@ -2,18 +2,18 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_RU.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/версия_нода-0.5.1_beta2-green?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/версия_нода-0.5.2_alpha1-lightgreen?style=for-the-badge&labelColor=darkgreen)
   
-  <sup>
+  <!--<sup>
   <font color=brightred>
 
   ## !!! [Важные изменения](#latestupdate) !!!<br>Не забудьте добавить Нод заново в существующие воркфлоу
   
   </font>
-  </sup>
+  </sup>-->
 
   <a href="https://boosty.to/artgourieff" target="_blank">
-    <img src="https://lovemet.ru/www/boosty.jpg" width="108" alt="Поддержать проект на Boosty"/>
+    <img src="https://lovemet.ru/img/boosty.jpg" width="108" alt="Поддержать проект на Boosty"/>
     <br>
     <sup>
       Поддержать проект
@@ -55,7 +55,16 @@
 
 ## Что нового в последнем обновлении
 
-### 0.5.1 <sub><sup>ALPHA1</sup></sub>
+### 0.5.2 <sub><sup>ALPHA1</sup></sub>
+
+- Новый нод "Unload ReActor Models" - полезен для сложных воркфлоу, когда вам нужно освободить ОЗУ, занятую РеАктором
+- Поддержка ORT CoreML and ROCM EPs, достаточно установить ту версию onnxruntime, которая соответствует вашему GPU
+- Некоторые улучшения скрипта установки для поддержки последней версии ORT-GPU
+
+<details>
+	<summary><a>Предыдущие версии</a></summary>
+
+### 0.5.1
 
 - Поддержка моделей восстановления лиц GPEN 1024/2048 (доступны в датасете на HF https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models/facerestore_models)
 - Нод ReActorFaceBoost - попытка улучшить качество заменённых лиц. Идея состоит в том, чтобы восстановить и увеличить заменённое лицо (в соответствии с параметром `face_size` модели реставрации) ДО того, как лицо будет вставлено в целевое изображения (через алгоритмы инсваппера), больше информации [здесь (PR#321)](https://github.com/Gourieff/comfyui-reactor-node/pull/321)
@@ -64,10 +73,8 @@
 
 [Полноразмерное демо-превью](https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.1-whatsnew-02.png)
 
-- Некоторые исправления и улучшения
-
-<details>
-	<summary><a>Предыдущие версии</a></summary>
+- Сортировка моделей лиц по алфавиту
+- Множество исправлений и улучшений
 
 ### [0.5.0 <sub><sup>BETA4</sup></sub>](https://github.com/Gourieff/comfyui-reactor-node/releases/tag/v0.5.0)
 

@@ -32,6 +32,9 @@ from scripts.reactor_faceswap import (
     half_det_size,
     providers
 )
+from scripts.reactor_swapper import (
+    unload_all_models,
+)
 from scripts.reactor_logger import logger
 from reactor_utils import (
     batch_tensor_to_pil,
@@ -1180,6 +1183,23 @@ class ReActorFaceBoost:
         }
         return (face_boost, )
     
+class ReActorUnload:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "trigger": ("IMAGE", ),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "execute"
+    CATEGORY = "🌌 ReActor"
+
+    def execute(self, trigger):
+        unload_all_models()
+        return (trigger,)
+
 
 NODE_CLASS_MAPPINGS = {
     # --- MAIN NODES ---
@@ -1197,6 +1217,7 @@ NODE_CLASS_MAPPINGS = {
     "ReActorRestoreFace": RestoreFace,
     "ReActorImageDublicator": ImageDublicator,
     "ImageRGBA2RGB": ImageRGBA2RGB,
+    "ReActorUnload": ReActorUnload,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1215,4 +1236,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ReActorRestoreFace": "Restore Face 🌌 ReActor",
     "ReActorImageDublicator": "Image Dublicator (List) 🌌 ReActor",
     "ImageRGBA2RGB": "Convert RGBA to RGB 🌌 ReActor",
+    "ReActorUnload": "Unload ReActor Models 🌌 ReActor",
 }

@@ -8,10 +8,11 @@ from PIL import Image
 
 import insightface
 from insightface.app.common import Face
-try:
-    import torch.cuda as cuda
-except:
-    cuda = None
+# try:
+#     import torch.cuda as cuda
+# except:
+#     cuda = None
+import torch
 
 import folder_paths
 import comfy.model_management as model_management
@@ -29,13 +30,26 @@ import warnings
 np.warnings = warnings
 np.warnings.filterwarnings('ignore')
 
-if cuda is not None:
-    if cuda.is_available():
+# PROVIDERS
+try:
+    if torch.cuda.is_available():
         providers = ["CUDAExecutionProvider"]
+    elif torch.backends.mps.is_available():
+        providers = ["CoreMLExecutionProvider"]
+    elif hasattr(torch,'dml') or hasattr(torch,'privateuseone'):
+        providers = ["ROCMExecutionProvider"]
     else:
         providers = ["CPUExecutionProvider"]
-else:
+except Exception as e:
+    logger.debug(f"ExecutionProviderError: {e}.\nEP is set to CPU.")
     providers = ["CPUExecutionProvider"]
+# if cuda is not None:
+#     if cuda.is_available():
+#         providers = ["CUDAExecutionProvider"]
+#     else:
+#         providers = ["CPUExecutionProvider"]
+# else:
+#     providers = ["CPUExecutionProvider"]
 
 models_path_old = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 insightface_path_old = os.path.join(models_path_old, "insightface")
@@ -69,6 +83,21 @@ TARGET_IMAGE_HASH = None
 TARGET_FACES_LIST = []
 TARGET_IMAGE_LIST_HASH = []
 
+def unload_model(model):
+    if model is not None:
+        # check if model has unload method
+        # if "unload" in model:
+        #     model.unload()
+        # if "model_unload" in model:
+        #     model.model_unload()
+        del model
+    return None
+
+def unload_all_models():
+    global FS_MODEL, CURRENT_FS_MODEL_PATH
+    FS_MODEL = unload_model(FS_MODEL)
+    ANALYSIS_MODELS["320"] = unload_model(ANALYSIS_MODELS["320"])
+    ANALYSIS_MODELS["640"] = unload_model(ANALYSIS_MODELS["640"])
 
 def get_current_faces_model():
     global SOURCE_FACES
@@ -86,10 +115,10 @@ def getAnalysisModel(det_size = (640, 640)):
     return ANALYSIS_MODEL
 
 def getFaceSwapModel(model_path: str):
-    global FS_MODEL
-    global CURRENT_FS_MODEL_PATH
-    if CURRENT_FS_MODEL_PATH is None or CURRENT_FS_MODEL_PATH != model_path:
+    global FS_MODEL, CURRENT_FS_MODEL_PATH
+    if FS_MODEL is None or CURRENT_FS_MODEL_PATH is None or CURRENT_FS_MODEL_PATH != model_path:
         CURRENT_FS_MODEL_PATH = model_path
+        FS_MODEL = unload_model(FS_MODEL)
         FS_MODEL = insightface.model_zoo.get_model(model_path, providers=providers)
 
     return FS_MODEL
