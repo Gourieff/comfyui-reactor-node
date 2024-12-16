@@ -3,7 +3,11 @@ import math
 import torch
 import torchvision
 import warnings
-from distutils.version import LooseVersion
+try:
+    from distutils.version import LooseVersion
+except:
+    from packaging.version import Version
+    LooseVersion = Version
 from itertools import repeat
 from torch import nn as nn
 from torch.nn import functional as F
