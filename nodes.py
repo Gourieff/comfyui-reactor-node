@@ -58,7 +58,7 @@ import scripts.r_archs.codeformer_arch
 import scripts.r_masking.subcore as subcore
 import scripts.r_masking.core as core
 import scripts.r_masking.segs as masking_segs
-
+from datetime import datetime
 
 models_dir = folder_paths.models_dir
 REACTOR_MODELS_PATH = os.path.join(models_dir, "reactor")
@@ -734,8 +734,15 @@ class MaskHelper:
 
     def execute(self, image, swapped_image, bbox_model_name, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, sam_model_name, sam_dilation, sam_threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative, morphology_operation, morphology_distance, blur_radius, sigma_factor, mask_optional=None):
 
+        def getTime():
+            return datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
+
+        print(' ')
+        print('Mask Helper Execute Start - ' + getTime())
+
         device = model_management.get_torch_device()
-        
+        print(device)
+    
         image = image.to(device, non_blocking=True)
         swapped_image = swapped_image.to(device, non_blocking=True)
         
@@ -750,7 +757,9 @@ class MaskHelper:
         with torch.cuda.device(device):
             if mask_optional is not None:
                 combined_mask = mask_optional.to(device, non_blocking=True)
-            else:
+            else:                
+                print('--- Mask Gen Start - ' + getTime())
+
                 bbox_model_path = folder_paths.get_full_path("ultralytics", bbox_model_name)
                 if not hasattr(self, '_cached_bbox_model') or self._cached_bbox_model_name != bbox_model_name:
                     bbox_model = subcore.load_yolo(bbox_model_path)
@@ -759,8 +768,10 @@ class MaskHelper:
                     self._cached_bbox_model_name = bbox_model_name
                 bbox_detector = subcore.UltraBBoxDetector(self._cached_bbox_model)
 
+                print('Face Seg Start - ' + getTime())
                 # Detect faces
                 segs = bbox_detector.detect(image, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, self.detailer_hook)
+                print('Face Seg End - ' + getTime())
 
                 if isinstance(self.labels, list):
                     self.labels = str(self.labels[0])
@@ -781,10 +792,16 @@ class MaskHelper:
                     self._cached_sam = sam
                     self._cached_sam_name = sam_model_name
 
+                print('combined_mask Gen Start - ' + getTime())
+
                 # Generate mask
                 combined_mask, _ = core.make_sam_mask_segmented(self._cached_sam, segs, image, self.detection_hint, 
                                                               sam_dilation, sam_threshold, bbox_expansion, 
                                                               mask_hint_threshold, mask_hint_use_negative)
+
+                print('combined_mask Gen End - ' + getTime())
+
+                print('--- Mask Gen End - ' + getTime())                      
 
             # Process mask
             mask_image = combined_mask.reshape((-1, 1, combined_mask.shape[-2], combined_mask.shape[-1])).movedim(1, -1).expand(-1, -1, -1, 3)
@@ -843,6 +860,9 @@ class MaskHelper:
             face_segment[...,3] = mask
 
             result = rgba2rgb_tensor(result)
+
+            print('Mask Helper Execute End - ' + getTime())
+            print(' ')            
 
             return (result, combined_mask, mask_image_final, face_segment)
 
