@@ -850,7 +850,7 @@ class MaskHelper:
             result = rgba2rgb_tensor(result)
 
             elapsedUTC = datetime.utcnow() - elapsedUTC
-            print('Masking Elapsed - 'elapsedUTC.strftime('%H:%M:%S.%f')[:-3])
+            print('Masking Elapsed - ' + elapsedUTC.strftime('%H:%M:%S.%f')[:-3])
 
             return (result, combined_mask, mask_image_final, face_segment)
 
