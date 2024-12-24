@@ -686,7 +686,7 @@ class MaskHelper:
         # self.drop_size = 1
         self.labels = "all"
         self.detailer_hook = None
-        self.device_mode = "AUTO"
+        self.device_mode = "Manual"
         self.detection_hint = "center-1"
         # self.sam_dilation = 0
         # self.sam_threshold = 0.93
@@ -851,7 +851,7 @@ class MaskHelper:
 
             elapsedUTC = datetime.utcnow() - elapsedUTC
             print('Masking Elapsed - 'elapsedUTC.strftime('%H:%M:%S.%f')[:-3])
-            
+
             return (result, combined_mask, mask_image_final, face_segment)
 
     def gaussian_blur(self, image, kernel_size, sigma):
