@@ -739,7 +739,6 @@ class MaskHelper:
             return datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
 
         device = model_management.get_torch_device()
-        print(device)
     
         image = image.to(device, non_blocking=True)
         swapped_image = swapped_image.to(device, non_blocking=True)
@@ -852,8 +851,8 @@ class MaskHelper:
             elapsedUTC = datetime.utcnow() - elapsedUTC
             hours, remainder = divmod(elapsedUTC.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
-            microseconds = elapsedUTC.microseconds
-            print(f"Masking Elapsed - {int(hours):02}:{int(minutes):02}:{int(seconds):02}.{microseconds:03}")
+            microseconds = elapsedUTC.microseconds // 1000
+            print(f"Masking Elapsed - {int(seconds):02}.{microseconds:03}")
 
             return (result, combined_mask, mask_image_final, face_segment)
 
