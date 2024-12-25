@@ -24,6 +24,7 @@ from reactor_utils import (
     get_image_md5hash,
 )
 from scripts.r_faceboost import swapper, restorer
+from datetime import datetime
 
 import warnings
 
@@ -383,9 +384,11 @@ def swap_face(
                 logger.status("No source face(s) in the provided Index")
         else:
             logger.status("No source face(s) found")
+
     return result_image
 
 def swap_face_many(
+    self,
     source_img: Union[Image.Image, None],
     target_imgs: List[Image.Image],
     model: Union[str, None] = None,
@@ -403,6 +406,18 @@ def swap_face_many(
 ):
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
+
+    beginElapsedUTC = datetime.utcnow()
+    elapsedUTC = beginElapsedUTC
+
+    def printElapsed(elapseName: str = ""):
+        nonlocal elapsedUTC
+        elapsedUTC = datetime.utcnow() - elapsedUTC
+        hours, remainder = divmod(elapsedUTC.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        microseconds = elapsedUTC.microseconds // 1000
+        print(f"{elapseName} Elapsed - {int(seconds):02}.{microseconds:03}")
+        elapsedUTC = datetime.utcnow()
 
     if model is not None:
 
@@ -543,9 +558,18 @@ def swap_face_many(
                                 if face_boost_enabled:
                                     logger.status(f"Face Boost is enabled")
                                     bgr_fake, M = face_swapper.get(target_img, target_face_single, source_face, paste_back=False)
-                                    bgr_fake, scale = restorer.get_restored_face(bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)
+
+                                    printElapsed('Face Swapping')   
+
+                                    bgr_fake, scale = restorer.get_restored_face(self, bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)
                                     M *= scale
+
+                                    printElapsed('Face Restore')
+
                                     result = swapper.in_swap(target_img, bgr_fake, M)
+
+                                    printElapsed('Face InSwap')                              
+
                                 else:
                                     # logger.status(f"Swapping as-is")
                                     result = face_swapper.get(target_img, target_face_single, source_face)
@@ -569,4 +593,11 @@ def swap_face_many(
                 logger.status("No source face(s) in the provided Index")
         else:
             logger.status("No source face(s) found")
+
+    beginElapsedUTC = datetime.utcnow() - beginElapsedUTC
+    hours, remainder = divmod(beginElapsedUTC.total_seconds(), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    microseconds = beginElapsedUTC.microseconds // 1000
+    print(f"Elapsed - {int(seconds):02}.{microseconds:03}")
+
     return result_images
