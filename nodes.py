@@ -735,8 +735,6 @@ class MaskHelper:
     def execute(self, image, swapped_image, bbox_model_name, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, sam_model_name, sam_dilation, sam_threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative, morphology_operation, morphology_distance, blur_radius, sigma_factor, mask_optional=None):
 
         elapsedUTC  = datetime.utcnow()
-        def getTime():
-            return datetime.utcnow().strftime('%H:%M:%S.%f')[:-3]
 
         device = model_management.get_torch_device()
     
