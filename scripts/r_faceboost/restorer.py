@@ -23,7 +23,6 @@ from reactor_utils import (
     prepare_cropped_face,
     normalize_cropped_face
 )
-from datetime import datetime
 
 if cuda is not None:
     if cuda.is_available():
@@ -40,19 +39,6 @@ def get_restored_face(self,
                       face_restore_visibility,
                       codeformer_weight,
                       interpolation: str = "Bicubic"):
-
-    beginElapsedUTC = datetime.utcnow()
-    elapsedUTC = beginElapsedUTC
-
-    def printElapsed(elapseName: str = ""):
-        nonlocal elapsedUTC
-        elapsedUTC = datetime.utcnow() - elapsedUTC
-        hours, remainder = divmod(elapsedUTC.total_seconds(), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        microseconds = elapsedUTC.microseconds // 1000
-        print(f"{elapseName} Elapsed - {int(seconds):02}.{microseconds:03}")
-        elapsedUTC = datetime.utcnow()
-
 
     if interpolation == "Bicubic":
         interpolate = cv2.INTER_CUBIC
@@ -85,8 +71,6 @@ def get_restored_face(self,
     cropped_face_t = img2tensor(cropped_face / 255., bgr2rgb=True, float32=True)
     normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
     cropped_face_t = cropped_face_t.unsqueeze(0).to(device)
-
-    printElapsed('Setup')
 
     try:
 
@@ -131,18 +115,12 @@ def get_restored_face(self,
                 facerestore_model = self._cached_restorer_pth_model
                 self._cached_restorer_pth_model_path = model_path
 
-                printElapsed('Load Stuff')
-
                 output = facerestore_model(cropped_face_t, w=codeformer_weight)[
                     0] if "codeformer" in face_restore_model.lower() else facerestore_model(cropped_face_t)[0]
                 restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
 
-                printElapsed('Face Restore')
-
         del output
         torch.cuda.empty_cache()
-
-        printElapsed('Empty Cache')
 
     except Exception as error:
 
@@ -153,7 +131,4 @@ def get_restored_face(self,
         restored_face = cropped_face * (1 - face_restore_visibility) + restored_face * face_restore_visibility
 
     restored_face = restored_face.astype("uint8")
-
-    printElapsed('Face Restore End')
-
     return restored_face, scale
