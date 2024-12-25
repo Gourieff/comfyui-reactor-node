@@ -850,7 +850,7 @@ class MaskHelper:
             hours, remainder = divmod(elapsedUTC.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
             microseconds = elapsedUTC.microseconds // 1000
-            print(f"Masking Elapsed - {int(seconds):02}.{microseconds:03}")
+            print(f"Masking Helper Elapsed - {int(seconds):02}.{microseconds:03}")
 
             return (result, combined_mask, mask_image_final, face_segment)
 
