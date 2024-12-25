@@ -10,7 +10,6 @@ from operator import itemgetter as _itemgetter
 from segment_anything import SamPredictor
 
 from comfy import model_management
-from datetime import datetime
 
 ################################################################################
 ### namedtuple
@@ -532,14 +531,13 @@ def merge_and_stack_masks(stacked_masks, group_size):
 
 def make_sam_mask_segmented(sam_model, segs, image, detection_hint, dilation,
                             threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative):
-
     if sam_model.is_auto_mode:
         device = model_management.get_torch_device()
         sam_model.safe_to.to_device(sam_model, device=device)
 
     try:
         predictor = SamPredictor(sam_model)
-        image = np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8) 
+        image = np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8)
         predictor.set_image(image, "RGB")
 
         total_masks = []
