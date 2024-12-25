@@ -58,7 +58,6 @@ import scripts.r_archs.codeformer_arch
 import scripts.r_masking.subcore as subcore
 import scripts.r_masking.core as core
 import scripts.r_masking.segs as masking_segs
-from datetime import datetime
 
 models_dir = folder_paths.models_dir
 REACTOR_MODELS_PATH = os.path.join(models_dir, "reactor")
@@ -734,8 +733,6 @@ class MaskHelper:
 
     def execute(self, image, swapped_image, bbox_model_name, bbox_threshold, bbox_dilation, bbox_crop_factor, bbox_drop_size, sam_model_name, sam_dilation, sam_threshold, bbox_expansion, mask_hint_threshold, mask_hint_use_negative, morphology_operation, morphology_distance, blur_radius, sigma_factor, mask_optional=None):
 
-        elapsedUTC  = datetime.utcnow()
-
         device = model_management.get_torch_device()
     
         image = image.to(device, non_blocking=True)
@@ -845,13 +842,6 @@ class MaskHelper:
             face_segment[...,3] = mask
 
             result = rgba2rgb_tensor(result)
-
-            elapsedUTC = datetime.utcnow() - elapsedUTC
-            hours, remainder = divmod(elapsedUTC.total_seconds(), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            microseconds = elapsedUTC.microseconds // 1000
-            print(f"Masking Helper Elapsed - {int(seconds):02}.{microseconds:03}")
-
             return (result, combined_mask, mask_image_final, face_segment)
 
     def gaussian_blur(self, image, kernel_size, sigma):

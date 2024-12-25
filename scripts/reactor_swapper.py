@@ -24,7 +24,6 @@ from reactor_utils import (
     get_image_md5hash,
 )
 from scripts.r_faceboost import swapper, restorer
-from datetime import datetime
 
 import warnings
 
@@ -419,8 +418,6 @@ def swap_face_many(
     global SOURCE_FACES, SOURCE_IMAGE_HASH, TARGET_FACES, TARGET_IMAGE_HASH, TARGET_FACES_LIST, TARGET_IMAGE_LIST_HASH
     result_images = target_imgs
 
-    beginElapsedUTC = datetime.utcnow()
-
     if model is not None:
 
         if isinstance(source_img, str):  # source_img is a base64 string
@@ -586,11 +583,5 @@ def swap_face_many(
                 logger.status("No source face(s) in the provided Index")
         else:
             logger.status("No source face(s) found")
-
-    beginElapsedUTC = datetime.utcnow() - beginElapsedUTC
-    hours, remainder = divmod(beginElapsedUTC.total_seconds(), 3600)
-    minutes, seconds = divmod(remainder, 60)
-    microseconds = beginElapsedUTC.microseconds // 1000
-    print(f"FaceSwap Elapsed - {int(seconds):02}.{microseconds:03}")
 
     return result_images
