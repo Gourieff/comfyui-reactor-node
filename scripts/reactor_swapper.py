@@ -94,11 +94,23 @@ def unload_model(model):
         del model
     return None
 
-def unload_all_models():
+def unload_all_models(self):
     global FS_MODEL, CURRENT_FS_MODEL_PATH
     FS_MODEL = unload_model(FS_MODEL)
     ANALYSIS_MODELS["320"] = unload_model(ANALYSIS_MODELS["320"])
     ANALYSIS_MODELS["640"] = unload_model(ANALYSIS_MODELS["640"])
+
+    if hasattr(self, '_cached_bbox_model'):
+        self._cached_bbox_model = unload_model(self._cached_bbox_model)
+        self._cached_bbox_model_name = None
+
+    if hasattr(self, '_cached_sam_model'):
+        self._cached_sam_model = unload_model(self._cached_sam_model)
+        self._cached_sam_model_path = None
+
+    if hasattr(self, '_cached_restorer_pth_model'):
+        self._cached_restorer_pth_model = unload_model(self._cached_restorer_pth_model)
+        self._cached_restorer_pth_model_path = None
 
 def get_current_faces_model():
     global SOURCE_FACES

@@ -772,7 +772,7 @@ class MaskHelper:
                         segs, _ = masking_segs.filter(segs, self.labels)
 
                 # Load and cache SAM model
-                if not hasattr(self, '_cached_sam') or self._cached_sam_name != sam_model_name:
+                if not hasattr(self, '_cached_sam_model') or self._cached_sam_model_path != sam_model_name:
                     sam_modelname = folder_paths.get_full_path("sams", sam_model_name)
                     model_kind = 'vit_h' if 'vit_h' in sam_model_name else 'vit_l' if 'vit_l' in sam_model_name else 'vit_b'
                     sam = sam_model_registry[model_kind](checkpoint=sam_modelname)
@@ -780,11 +780,11 @@ class MaskHelper:
                     sam.safe_to = core.SafeToGPU(size)
                     sam.safe_to.to_device(sam, device)
                     sam.is_auto_mode = self.device_mode == "AUTO"
-                    self._cached_sam = sam
-                    self._cached_sam_name = sam_model_name
+                    self._cached_sam_model = sam
+                    self._cached_sam_model_path = sam_model_name
 
                 # Generate mask
-                combined_mask, _ = core.make_sam_mask_segmented(self._cached_sam, segs, image, self.detection_hint, 
+                combined_mask, _ = core.make_sam_mask_segmented(self._cached_sam_model, segs, image, self.detection_hint, 
                                                               sam_dilation, sam_threshold, bbox_expansion, 
                                                               mask_hint_threshold, mask_hint_use_negative)              
 
@@ -1045,7 +1045,7 @@ class ReActorUnload:
     CATEGORY = "🌌 ReActor"
 
     def execute(self, trigger):
-        unload_all_models()
+        unload_all_models(self)
         return (trigger,)
 
 

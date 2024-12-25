@@ -111,7 +111,7 @@ def get_restored_face(self,
 
             else:  # PTH models
 
-                if not hasattr(self, '_cached_model') or self._cached_model_path != model_path:
+                if not hasattr(self, '_cached_restorer_pth_model') or self._cached_restorer_pth_model_path != model_path:
                     if "codeformer" in face_restore_model.lower():
                         codeformer_net = ARCH_REGISTRY.get("CodeFormer")(
                             dim_embd=512,
@@ -122,15 +122,15 @@ def get_restored_face(self,
                         ).to(device)
                         checkpoint = torch.load(model_path)["params_ema"]
                         codeformer_net.load_state_dict(checkpoint)
-                        self._cached_model = codeformer_net.eval()
+                        self._cached_restorer_pth_model = codeformer_net.eval()
                     else:
                         sd = comfy.utils.load_torch_file(model_path, safe_load=True)
-                        self._cached_model = model_loading.load_state_dict(sd).eval()
-                        self._cached_model.to(device)
+                        self._cached_restorer_pth_model = model_loading.load_state_dict(sd).eval()
+                        self._cached_restorer_pth_model.to(device)
 
-                facerestore_model = self._cached_model
-                self._cached_model_path = model_path
-                
+                facerestore_model = self._cached_restorer_pth_model
+                self._cached_restorer_pth_model_path = model_path
+
                 printElapsed('Load Stuff')
 
                 output = facerestore_model(cropped_face_t, w=codeformer_weight)[
