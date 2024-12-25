@@ -589,8 +589,8 @@ def make_sam_mask_segmented(sam_model, segs, image, detection_hint, dilation,
         mask = combine_masks2(total_masks)
 
     finally:
-        #if sam_model.is_auto_mode:
-        #    sam_model.cpu()
+        if sam_model.is_auto_mode:
+            sam_model.cpu()
 
         pass
 
