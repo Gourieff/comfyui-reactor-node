@@ -183,10 +183,9 @@ def analyze_faces(img_data: np.ndarray, det_size=(640, 640)):
         logger.status("No face found so skipping this frame")
         return faces
     # Try halving det_size if no faces are found
-    if len(faces) == 0 and det_size[0] > 320 and det_size[1] > 320:
-        det_size_half = half_det_size(det_size)
-        return analyze_faces(img_data, det_size_half)
-
+    elif len(faces) == 0 and det_size[0] > 320 and det_size[1] > 320:
+         det_size_half = half_det_size(det_size)
+         return analyze_faces(img_data, det_size_half)
     return faces
 
 def get_face_single(img_data: np.ndarray, face, face_index=0, det_size=(640, 640), gender_source=0, gender_target=0, order="large-small"):
