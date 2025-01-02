@@ -17,6 +17,29 @@ from onnx import numpy_helper
 from scripts.reactor_logger import logger
 
 
+def patched_get_model_log(self, **kwargs):
+    session = PickableInferenceSession(self.onnx_file, **kwargs)
+    print(f'Applied providers: {session._providers}, with options: {session._provider_options}')
+    inputs = session.get_inputs()
+    input_cfg = inputs[0]
+    input_shape = input_cfg.shape
+    outputs = session.get_outputs()
+
+    if len(outputs) >= 5:
+        return RetinaFace(model_file=self.onnx_file, session=session)
+    elif input_shape[2] == 192 and input_shape[3] == 192:
+        return Landmark(model_file=self.onnx_file, session=session)
+    elif input_shape[2] == 96 and input_shape[3] == 96:
+        return Attribute(model_file=self.onnx_file, session=session)
+    elif len(inputs) == 2 and input_shape[2] == 128 and input_shape[3] == 128:
+        return INSwapper(model_file=self.onnx_file, session=session)
+    elif len(inputs) == 2 and input_shape[2] == 256 and input_shape[3] == 256:
+        return INSwapper(model_file=self.onnx_file, session=session)
+    elif input_shape[2] == input_shape[3] and input_shape[2] >= 112 and input_shape[2] % 16 == 0:
+        return ArcFaceONNX(model_file=self.onnx_file, session=session)
+    else:
+        return None
+
 def patched_get_model(self, **kwargs):
     session = PickableInferenceSession(self.onnx_file, **kwargs)
     inputs = session.get_inputs()
@@ -31,6 +54,8 @@ def patched_get_model(self, **kwargs):
     elif input_shape[2] == 96 and input_shape[3] == 96:
         return Attribute(model_file=self.onnx_file, session=session)
     elif len(inputs) == 2 and input_shape[2] == 128 and input_shape[3] == 128:
+        return INSwapper(model_file=self.onnx_file, session=session)
+    elif len(inputs) == 2 and input_shape[2] == 256 and input_shape[3] == 256:
         return INSwapper(model_file=self.onnx_file, session=session)
     elif input_shape[2] == input_shape[3] and input_shape[2] >= 112 and input_shape[2] % 16 == 0:
         return ArcFaceONNX(model_file=self.onnx_file, session=session)
@@ -119,7 +144,8 @@ def patch_insightface(get_model, faceanalysis_init, faceanalysis_prepare, inswap
     insightface.model_zoo.retinaface.RetinaFace.prepare = retinaface_prepare
 
 
-original_functions = [ModelRouter.get_model, FaceAnalysis.__init__, FaceAnalysis.prepare, INSwapper.__init__, RetinaFace.prepare]
+# original_functions = [ModelRouter.get_model, FaceAnalysis.__init__, FaceAnalysis.prepare, INSwapper.__init__, RetinaFace.prepare]
+original_functions = [patched_get_model_log, FaceAnalysis.__init__, FaceAnalysis.prepare, INSwapper.__init__, RetinaFace.prepare]
 patched_functions = [patched_get_model, patched_faceanalysis_init, patched_faceanalysis_prepare, patched_inswapper_init, pathced_retinaface_prepare]
 
 
