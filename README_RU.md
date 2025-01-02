@@ -2,7 +2,7 @@
 
   <img src="https://github.com/Gourieff/Assets/raw/main/sd-webui-reactor/ReActor_logo_NEW_RU.png?raw=true" alt="logo" width="180px"/>
 
-  ![Version](https://img.shields.io/badge/версия_нода-0.5.2_alpha2-lightgreen?style=for-the-badge&labelColor=darkgreen)
+  ![Version](https://img.shields.io/badge/версия_нода-0.5.2_beta1-green?style=for-the-badge&labelColor=darkgreen)
   
   <!--<sup>
   <font color=brightred>
@@ -55,11 +55,27 @@
 
 ## Что нового в последнем обновлении
 
+### 0.5.2 <sub><sup>BETA1</sup></sub>
+
+- Поддержка моделей ReSwapper. Несмотря на то, что Inswapper по-прежнему даёт лучшее сходство, но ReSwapper развивается - спасибо @somanchiu https://github.com/somanchiu/ReSwapper за эти модели и проект ReSwapper! Это хороший шаг для Сообщества в создании альтернативы Инсваппера!
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.2-whatsnew-03.jpg?raw=true" alt="0.5.2-whatsnew-03" width="100%"/>
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.2-whatsnew-04.jpg?raw=true" alt="0.5.2-whatsnew-04" width="100%"/>
+
+Скачать модели ReSwapper можно отсюда:
+https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models
+Сохраните их в директорию "models/reswapper".
+
 ### 0.5.2 <sub><sup>ALPHA1</sup></sub>
 
 - Новый нод "Unload ReActor Models" - полезен для сложных воркфлоу, когда вам нужно освободить ОЗУ, занятую РеАктором
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.2-whatsnew-01.jpg?raw=true" alt="0.5.2-whatsnew-01" width="100%"/>
+
 - Поддержка ORT CoreML and ROCM EPs, достаточно установить ту версию onnxruntime, которая соответствует вашему GPU
 - Некоторые улучшения скрипта установки для поддержки последней версии ORT-GPU
+
+<img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.2-whatsnew-02.jpg?raw=true" alt="0.5.2-whatsnew-02" width="100%"/>
 
 <details>
 	<summary><a>Предыдущие версии</a></summary>
