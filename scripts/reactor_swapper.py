@@ -58,6 +58,7 @@ insightface_models_path_old = os.path.join(insightface_path_old, "models")
 models_path = folder_paths.models_dir
 insightface_path = os.path.join(models_path, "insightface")
 insightface_models_path = os.path.join(insightface_path, "models")
+reswapper_path = os.path.join(models_path, "reswapper")
 
 if os.path.exists(models_path_old):
     move_path(insightface_models_path_old, insightface_models_path)
@@ -328,7 +329,10 @@ def swap_face(
                 logger.status(f'Source Faces must have no entries (default=0), one entry, or same number of entries as target faces.')
             elif source_face is not None:
                 result = target_img
-                model_path = model_path = os.path.join(insightface_path, model)
+                if "inswapper" in model:
+                    model_path = model_path = os.path.join(insightface_path, model)
+                elif "reswapper" in model:
+                    model_path = model_path = os.path.join(reswapper_path, model)
                 face_swapper = getFaceSwapModel(model_path)
 
                 source_face_idx = 0

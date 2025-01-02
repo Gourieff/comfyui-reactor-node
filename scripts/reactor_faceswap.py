@@ -24,10 +24,18 @@ import comfy.model_management as model_management
 
 
 def get_models():
-    models_path = os.path.join(folder_paths.models_dir,"insightface/*")
-    models = glob.glob(models_path)
-    models = [x for x in models if x.endswith(".onnx") or x.endswith(".pth")]
-    return models
+    swappers = [
+        "insightface",
+        "reswapper"
+    ]
+    models_list = []
+    for folder in swappers:
+        models_folder = folder + "/*"
+        models_path = os.path.join(folder_paths.models_dir,models_folder)
+        models = glob.glob(models_path)
+        models = [x for x in models if x.endswith(".onnx") or x.endswith(".pth")]
+        models_list.extend(models)
+    return models_list
 
 
 class FaceSwapScript(scripts.Script):
