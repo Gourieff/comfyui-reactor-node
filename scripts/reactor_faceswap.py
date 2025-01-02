@@ -144,6 +144,7 @@ class FaceSwapScript(scripts.Script):
 
                 elif len(p.init_images) > 1:
                     result = swap_face_many(
+                        self,
                         self.source,
                         p.init_images,
                         source_faces_index=self.source_faces_index,

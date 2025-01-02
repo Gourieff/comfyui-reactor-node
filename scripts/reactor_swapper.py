@@ -94,11 +94,23 @@ def unload_model(model):
         del model
     return None
 
-def unload_all_models():
+def unload_all_models(self):
     global FS_MODEL, CURRENT_FS_MODEL_PATH
     FS_MODEL = unload_model(FS_MODEL)
     ANALYSIS_MODELS["320"] = unload_model(ANALYSIS_MODELS["320"])
     ANALYSIS_MODELS["640"] = unload_model(ANALYSIS_MODELS["640"])
+
+    if hasattr(self, '_cached_bbox_model'):
+        self._cached_bbox_model = unload_model(self._cached_bbox_model)
+        self._cached_bbox_model_name = None
+
+    if hasattr(self, '_cached_sam_model'):
+        self._cached_sam_model = unload_model(self._cached_sam_model)
+        self._cached_sam_model_path = None
+
+    if hasattr(self, '_cached_restorer_pth_model'):
+        self._cached_restorer_pth_model = unload_model(self._cached_restorer_pth_model)
+        self._cached_restorer_pth_model_path = None
 
 def get_current_faces_model():
     global SOURCE_FACES
@@ -390,6 +402,7 @@ def swap_face(
     return result_image
 
 def swap_face_many(
+    self,
     source_img: Union[Image.Image, None],
     target_imgs: List[Image.Image],
     model: Union[str, None] = None,
@@ -546,8 +559,8 @@ def swap_face_many(
                                 logger.status(f"Swapping {i}...")
                                 if face_boost_enabled:
                                     logger.status(f"Face Boost is enabled")
-                                    bgr_fake, M = face_swapper.get(target_img, target_face_single, source_face, paste_back=False)
-                                    bgr_fake, scale = restorer.get_restored_face(bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)
+                                    bgr_fake, M = face_swapper.get(target_img, target_face_single, source_face, paste_back=False)                                  
+                                    bgr_fake, scale = restorer.get_restored_face(self, bgr_fake, face_restore_model, face_restore_visibility, codeformer_weight, interpolation)
                                     M *= scale
                                     result = swapper.in_swap(target_img, bgr_fake, M)
                                 else:
