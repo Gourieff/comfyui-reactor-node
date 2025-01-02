@@ -63,7 +63,7 @@
 <img src="https://github.com/Gourieff/Assets/blob/main/comfyui-reactor-node/0.5.2-whatsnew-04.jpg?raw=true" alt="0.5.2-whatsnew-04" width="100%"/>
 
 You can download ReSwapper models here:
-https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models
+https://huggingface.co/datasets/Gourieff/ReActor/tree/main/models<br>
 Just put them into the "models/reswapper" directory.
 
 ### 0.5.2 <sub><sup>ALPHA1</sup></sub>
